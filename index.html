@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cloud AI - Render Connected</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Marked.js for Markdown Rendering -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #ffffff;
+            color: #1f2937;
+            overflow-x: hidden;
+            height: 100vh;
+            height: 100dvh;
+        }
+
+        .montserrat-font {
+            font-family: 'Montserrat', sans-serif;
+        }
+
+        .ambient-bg {
+            background: radial-gradient(circle at 50% 100%, #f0f4f8 0%, #e2e8f0 50%, #ffffff 100%);
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        .typing-cursor {
+            display: inline-block;
+            width: 3px;
+            height: 1.1em;
+            background-color: #2563eb;
+            margin-left: 4px;
+            vertical-align: -0.15em;
+            animation: blink 0.8s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .logo-static {
+            filter: drop-shadow(0 0 12px rgba(37, 99, 235, 0.15));
+        }
+
+        @keyframes shimmer {
+            0% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+            100% { opacity: 0.4; }
+        }
+        .shimmer {
+            animation: shimmer 1.5s infinite ease-in-out;
+        }
+
+        .markdown-body p { margin-bottom: 0.75rem; line-height: 1.6; }
+        .markdown-body p:last-child { margin-bottom: 0; }
+        .markdown-body ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.75rem; }
+        .markdown-body ol { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.75rem; }
+        .markdown-body pre { background: #f8fafc; padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin-top: 0.5rem; margin-bottom: 0.75rem; border: 1px solid rgba(0,0,0,0.08); color: #1e293b; }
+        .markdown-body code { font-family: monospace; background: rgba(0,0,0,0.06); padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; color: #0f172a; }
+        .markdown-body pre code { background: transparent; padding: 0; }
+        .markdown-body strong { color: #0f172a; font-weight: 600; }
+        .markdown-body a { color: #2563eb; text-decoration: underline; text-underline-offset: 2px; }
+        .markdown-body blockquote { border-left: 3px solid #3b82f6; padding-left: 0.75rem; color: #4b5563; font-style: italic; margin-bottom: 0.75rem; }
+    </style>
+</head>
+<body class="ambient-bg flex flex-col h-screen select-none justify-between overflow-hidden">
+
+    <!-- Sidebar Overlay & Panel -->
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-35 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-80 bg-white border-r border-gray-200 flex flex-col transform -translate-x-full transition-transform duration-300 shadow-2xl">
+        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+            <img src="https://i.postimg.cc/DZMhfznn/1000017243-removebg-preview.png" alt="Cloud Logo" class="w-8 h-8 object-contain logo-static">
+            <button id="closeSidebarBtn" class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <div class="p-3">
+            <button id="sidebarNewChatBtn" class="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 transition-all flex items-center justify-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                <span>Nuevo Chat</span>
+            </button>
+        </div>
+        <div id="sessionList" class="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-1">
+            <!-- Dynamic session items inserted here -->
+        </div>
+        <div id="adminPanelSection" class="p-4 border-t border-gray-200 hidden">
+            <button id="exportAdminBtn" class="w-full py-2 bg-emerald-50 border border-emerald-300 rounded-xl text-xs text-emerald-700 hover:bg-emerald-100 transition-all flex items-center justify-center gap-1.5">
+                <span>📥 Exportar Auditoría JSON</span>
+            </button>
+        </div>
+    </aside>
+
+    <header class="w-full px-4 pt-3 pb-2 flex items-center justify-between z-30">
+        <!-- Left Section: Hamburger Menu -->
+        <div class="flex items-center gap-2">
+            <button id="menuBtn" class="p-2 rounded-full hover:bg-gray-200/60 text-gray-700 transition-colors active:scale-95" title="Menú">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="4" y1="7" x2="20" y2="7"></line>
+                    <line x1="4" y1="17" x2="20" y2="17"></line>
+                </svg>
+            </button>
+            <span id="headerUserName" class="text-sm font-medium text-gray-700 hidden sm:inline-block">Cloud AI</span>
+        </div>
+
+        <!-- Right Section: New Chat Button -->
+        <div class="flex items-center gap-2">
+            <button id="newChatBtn" class="p-2 rounded-full hover:bg-gray-200/60 text-gray-700 transition-colors active:scale-95" title="Nuevo Chat">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
+                    <path d="M5 3v4"/>
+                    <path d="M19 17v4"/>
+                    <path d="M3 5h4"/>
+                    <path d="M17 19h4"/>
+                </svg>
+            </button>
+        </div>
+    </header>
+
+    <main id="chatContainer" class="flex-1 flex flex-col justify-center items-center px-4 sm:px-6 overflow-y-auto w-full max-w-3xl mx-auto transition-all">
+        
+        <!-- Default Welcome View -->
+        <div id="welcomeView" class="flex flex-col items-center text-center my-auto py-8 transition-opacity duration-300">
+            <div class="mb-6 relative">
+                <img 
+                    src="https://i.postimg.cc/DZMhfznn/1000017243-removebg-preview.png" 
+                    alt="Cloud Logo" 
+                    class="w-20 h-20 sm:w-24 sm:h-24 object-contain logo-static"
+                    onerror="this.src='https://placehold.co/120x120/e2e8f0/1e293b?text=Cloud'"
+                >
+            </div>
+
+            <h1 class="montserrat-font text-2xl sm:text-3xl md:text-4xl font-medium text-gray-900 tracking-tight leading-snug max-w-xl min-h-[4rem] sm:min-h-[5rem] flex items-center justify-center flex-wrap">
+                <span id="typedTitle"></span><span id="cursor" class="typing-cursor"></span>
+            </h1>
+
+            <div id="suggestionsGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-8 w-full max-w-xl opacity-0 transition-opacity duration-500">
+                <button class="suggestion-btn text-left p-3.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-2xl transition-all text-xs text-gray-700 hover:text-gray-900 flex flex-col justify-between h-24 shadow-sm">
+                    <span>💡 Explícame un concepto complejo de forma sencilla</span>
+                    <span class="text-[10px] text-gray-500 font-medium">Análisis inteligente</span>
+                </button>
+                <button class="suggestion-btn text-left p-3.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-2xl transition-all text-xs text-gray-700 hover:text-gray-900 flex flex-col justify-between h-24 shadow-sm">
+                    <span>⚡ ¿Qué es la clave secreta Golden ID?</span>
+                    <span class="text-[10px] text-gray-500 font-medium">Comando especial</span>
+                </button>
+                <button class="suggestion-btn text-left p-3.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-2xl transition-all text-xs text-gray-700 hover:text-gray-900 flex flex-col justify-between h-24 shadow-sm">
+                    <span>🔍 Analiza las últimas tendencias tecnológicas</span>
+                    <span class="text-[10px] text-gray-500 font-medium">Pensamiento crítico</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Dynamic Message Feed -->
+        <div id="messageList" class="w-full flex flex-col gap-6 py-6 hidden"></div>
+    </main>
+
+    <footer class="w-full max-w-2xl mx-auto px-4 pb-6 pt-2 z-30">
+        <!-- Contenedor general del Footer con vista previa de imagen si aplica -->
+        <div class="flex flex-col bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border border-gray-200 focus-within:border-blue-400 transition-all p-1.5">
+            
+            <!-- Vista Previa de Imagen Adjunta -->
+            <div id="imagePreviewContainer" class="hidden px-3 pt-2 pb-1 flex items-center gap-2">
+                <div class="relative group">
+                    <img id="imagePreview" src="" alt="Vista previa" class="w-14 h-14 object-cover rounded-xl border border-gray-200">
+                    <button id="removeImageBtn" type="button" class="absolute -top-1.5 -right-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 shadow transition-colors">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+                <span id="imageName" class="text-xs text-gray-600 truncate max-w-[150px]"></span>
+            </div>
+
+            <!-- Entrada de Texto + Botones -->
+            <div class="flex items-center px-2 py-1">
+                <!-- Botón de Adjuntar Imagen -->
+                <input type="file" id="imageInput" accept="image/*" class="hidden">
+                <button id="attachBtn" type="button" class="p-2 rounded-full text-gray-600 hover:bg-gray-100 active:scale-90 transition-all mr-1 flex-shrink-0" title="Subir imagen">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                </button>
+
+                <!-- Input de mensaje -->
+                <input 
+                    type="text" 
+                    id="userInput"
+                    placeholder="Pregunta a Cloud..." 
+                    class="w-full bg-transparent text-gray-900 placeholder-gray-400 focus:outline-none text-base px-2 py-1 font-normal select-text"
+                    autocomplete="off"
+                >
+
+                <!-- Botón de Enviar -->
+                <button id="sendBtn" class="p-2 rounded-full text-gray-600 hover:bg-gray-100 active:scale-90 transition-all ml-1 flex-shrink-0" title="Enviar">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 bg-gray-900 text-gray-100 text-xs px-4 py-2.5 rounded-full shadow-lg border border-gray-700 opacity-0 transition-all pointer-events-none z-50 flex items-center gap-2">
+        <span id="toastMsg">Notificación</span>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const API_BASE = 'https://moti-7vy2.onrender.com';
+
+        const fullText = "Hola, soy Cloud, ¿en qué te puedo ayudar?";
+        const typedTitleEl = document.getElementById('typedTitle');
+        const suggestionsGrid = document.getElementById('suggestionsGrid');
+        const userInput = document.getElementById('userInput');
+        const sendBtn = document.getElementById('sendBtn');
+        const welcomeView = document.getElementById('welcomeView');
+        const messageList = document.getElementById('messageList');
+        const chatContainer = document.getElementById('chatContainer');
+        const newChatBtn = document.getElementById('newChatBtn');
+        const sidebarNewChatBtn = document.getElementById('sidebarNewChatBtn');
+        const menuBtn = document.getElementById('menuBtn');
+        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const sessionList = document.getElementById('sessionList');
+        const adminPanelSection = document.getElementById('adminPanelSection');
+        const exportAdminBtn = document.getElementById('exportAdminBtn');
+        const headerUserName = document.getElementById('headerUserName');
+        const toast = document.getElementById('toast');
+        const toastMsg = document.getElementById('toastMsg');
+
+        const attachBtn = document.getElementById('attachBtn');
+        const imageInput = document.getElementById('imageInput');
+        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+        const imagePreview = document.getElementById('imagePreview');
+        const imageName = document.getElementById('imageName');
+        const removeImageBtn = document.getElementById('removeImageBtn');
+
+        let selectedImageBase64 = null;
+        let selectedImageFileName = null;
+
+        let charIndex = 0;
+        const typingSpeed = 40;
+        
+        let userId = localStorage.getItem('cloud_user_id') || '';
+        let userName = localStorage.getItem('cloud_user_name') || '';
+        let currentSessionId = null;
+        let isAdmin = false;
+
+        attachBtn.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!file.type.startsWith('image/')) {
+                showToast("Por favor selecciona un archivo de imagen válido");
+                imageInput.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                selectedImageBase64 = event.target.result;
+                selectedImageFileName = file.name;
+
+                imagePreview.src = selectedImageBase64;
+                imageName.textContent = file.name;
+                imagePreviewContainer.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        function clearSelectedImage() {
+            selectedImageBase64 = null;
+            selectedImageFileName = null;
+            imageInput.value = '';
+            imagePreview.src = '';
+            imageName.textContent = '';
+            imagePreviewContainer.classList.add('hidden');
+        }
+
+        removeImageBtn.addEventListener('click', clearSelectedImage);
+
+        function typeWriter() {
+            if (charIndex < fullText.length) {
+                typedTitleEl.textContent += fullText.charAt(charIndex);
+                charIndex++;
+                setTimeout(typeWriter, typingSpeed);
+            } else {
+                if (suggestionsGrid) suggestionsGrid.classList.remove('opacity-0');
+            }
+        }
+        setTimeout(typeWriter, 300);
+
+        function showToast(msg) {
+            toastMsg.textContent = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
+        }
+
+        function toggleSidebar(open) {
+            if (open) {
+                sidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('opacity-0', 'pointer-events-none');
+            }
+        }
+
+        menuBtn.addEventListener('click', () => toggleSidebar(true));
+        closeSidebarBtn.addEventListener('click', () => toggleSidebar(false));
+        sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
+
+        async function initAuthAndSessions() {
+            try {
+                const res = await fetch(`${API_BASE}/api/auth`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, name: userName })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    userId = data.user_id;
+                    userName = data.name;
+                    isAdmin = data.is_admin;
+                    
+                    localStorage.setItem('cloud_user_id', userId);
+                    localStorage.setItem('cloud_user_name', userName);
+                    
+                    headerUserName.textContent = `Cloud AI (${userName})`;
+
+                    if (isAdmin) {
+                        adminPanelSection.classList.remove('hidden');
+                    }
+
+                    await loadSessions();
+                }
+            } catch (e) {
+                console.error("Auth error:", e);
+                showToast("No se pudo conectar con el servidor en Render");
+            }
+        }
+
+        async function loadSessions() {
+            if (!userId) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/sessions?user_id=${userId}`);
+                const data = await res.json();
+                sessionList.innerHTML = '';
+                
+                if (data.sessions && data.sessions.length > 0) {
+                    data.sessions.forEach(s => {
+                        const itemContainer = document.createElement('div');
+                        itemContainer.className = `w-full flex items-center justify-between rounded-xl transition-colors group ${s.session_id === currentSessionId ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`;
+                        
+                        const btn = document.createElement('button');
+                        btn.className = `flex-1 text-left px-3.5 py-2.5 text-xs truncate`;
+                        btn.innerHTML = `<span class="truncate">${escapeHtml(s.title || 'Nueva Conversación')}</span>`;
+                        btn.addEventListener('click', () => selectSession(s.session_id));
+                        
+                        const deleteBtn = document.createElement('button');
+                        deleteBtn.className = `p-2 text-gray-400 hover:text-red-500 transition-colors mr-1 opacity-0 group-hover:opacity-100 focus:opacity-100`;
+                        deleteBtn.title = "Eliminar conversación";
+                        deleteBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+                        
+                        deleteBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            deleteSession(s.session_id);
+                        });
+
+                        itemContainer.appendChild(btn);
+                        itemContainer.appendChild(deleteBtn);
+                        sessionList.appendChild(itemContainer);
+                    });
+                } else {
+                    sessionList.innerHTML = '<p class="text-xs text-gray-500 px-3 py-2">No hay conversaciones aún.</p>';
+                }
+            } catch (e) {
+                console.error("Error loading sessions:", e);
+            }
+        }
+
+        async function deleteSession(sessionId) {
+            if (!confirm("¿Estás seguro de que deseas eliminar esta conversación?")) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/sessions`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ session_id: sessionId, user_id: userId })
+                });
+                const data = await res.json();
+                if (data.status === 'success' || res.ok) {
+                    showToast("Conversación eliminada");
+                    if (currentSessionId === sessionId) {
+                        resetToNewChat();
+                    } else {
+                        await loadSessions();
+                    }
+                } else {
+                    showToast("No se pudo eliminar la conversación");
+                }
+            } catch (e) {
+                console.error("Error deleting session:", e);
+                showToast("Error al intentar eliminar la conversación");
+            }
+        }
+
+        async function createNewSession(title = 'Nueva Conversación') {
+            try {
+                const res = await fetch(`${API_BASE}/api/sessions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_id: userId, title: title })
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    currentSessionId = data.session_id;
+                    await loadSessions();
+                    return currentSessionId;
+                }
+            } catch (e) {
+                console.error("Error creating session:", e);
+            }
+            return null;
+        }
+
+        async function selectSession(sessionId) {
+            currentSessionId = sessionId;
+            toggleSidebar(false);
+            loadSessions();
+
+            try {
+                const res = await fetch(`${API_BASE}/api/messages?session_id=${sessionId}`);
+                const data = await res.json();
+                messageList.innerHTML = '';
+
+                if (data.messages && data.messages.length > 0) {
+                    welcomeView.classList.add('hidden');
+                    messageList.classList.remove('hidden');
+                    chatContainer.classList.remove('justify-center');
+                    chatContainer.classList.add('justify-start');
+
+                    // ORDENAR POR BLOQUES Y CRONOLÓGICAMENTE (PAIR-BASED QUERY RENDER)
+                    const sortedMessages = data.messages.sort((a, b) => {
+                        const timeA = a.created_at || a.timestamp || 0;
+                        const timeB = b.created_at || b.timestamp || 0;
+                        return timeA - timeB;
+                    });
+
+                    let currentTurnGroup = null;
+
+                    sortedMessages.forEach(msg => {
+                        if (msg.sender === 'user') {
+                            currentTurnGroup = createQueryTurnContainer();
+                            appendUserMessageToGroup(currentTurnGroup, msg.text, msg.image_base64);
+                        } else {
+                            if (!currentTurnGroup) {
+                                currentTurnGroup = createQueryTurnContainer();
+                            }
+                            appendCloudMessageToGroup(currentTurnGroup, msg.text);
+                        }
+                    });
+                } else {
+                    messageList.classList.add('hidden');
+                    welcomeView.classList.remove('hidden');
+                    chatContainer.classList.add('justify-center');
+                    chatContainer.classList.remove('justify-start');
+                }
+            } catch (e) {
+                console.error("Error loading messages:", e);
+            }
+        }
+
+        function resetToNewChat() {
+            currentSessionId = null;
+            messageList.innerHTML = '';
+            messageList.classList.add('hidden');
+            welcomeView.classList.remove('hidden');
+            chatContainer.classList.add('justify-center');
+            chatContainer.classList.remove('justify-start');
+            clearSelectedImage();
+            loadSessions();
+            showToast("Nueva conversación iniciada ✨");
+        }
+
+        newChatBtn.addEventListener('click', resetToNewChat);
+        sidebarNewChatBtn.addEventListener('click', () => {
+            toggleSidebar(false);
+            resetToNewChat();
+        });
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function createQueryTurnContainer() {
+            const turnGroup = document.createElement('div');
+            turnGroup.className = 'w-full flex flex-col gap-4 border-b border-gray-100 pb-4';
+            messageList.appendChild(turnGroup);
+            return turnGroup;
+        }
+
+        function appendUserMessageToGroup(group, text, imgBase64 = null) {
+            const userMsg = document.createElement('div');
+            userMsg.className = 'self-end flex flex-col items-end max-w-[85%]';
+            
+            let imgHtml = '';
+            if (imgBase64) {
+                imgHtml = `<img src="${imgBase64}" class="max-w-xs max-h-60 rounded-xl mb-2 object-cover border border-gray-200 shadow-sm">`;
+            }
+
+            userMsg.innerHTML = `
+                ${imgHtml}
+                ${text ? `<div class="bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-tr-sm text-sm leading-relaxed shadow-sm">${escapeHtml(text)}</div>` : ''}
+            `;
+            group.appendChild(userMsg);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function appendCloudMessageToGroup(group, text) {
+            const cloudMsg = document.createElement('div');
+            cloudMsg.className = 'self-start flex gap-3 items-start max-w-[92%] sm:max-w-[85%] text-sm text-gray-800 leading-relaxed';
+            const renderedHtml = window.marked ? marked.parse(text) : escapeHtml(text);
+            
+            cloudMsg.innerHTML = `
+                <img src="https://i.postimg.cc/DZMhfznn/1000017243-removebg-preview.png" class="w-6 h-6 object-contain mt-1 flex-shrink-0 logo-static" alt="Cloud">
+                <div class="bg-gray-50 px-5 py-3.5 rounded-2xl rounded-tl-sm border border-gray-200 w-full shadow-sm">
+                    <div class="markdown-body text-sm leading-relaxed text-gray-800">${renderedHtml}</div>
+                </div>
+            `;
+            group.appendChild(cloudMsg);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function createCloudLoadingBubble(group) {
+            const cloudMsg = document.createElement('div');
+            cloudMsg.className = 'self-start flex gap-3 items-start max-w-[92%] sm:max-w-[85%] text-sm text-gray-800 leading-relaxed';
+            cloudMsg.innerHTML = `
+                <img src="https://i.postimg.cc/DZMhfznn/1000017243-removebg-preview.png" class="w-6 h-6 object-contain mt-1 flex-shrink-0 logo-static" alt="Cloud">
+                <div class="bg-gray-50 px-5 py-3.5 rounded-2xl rounded-tl-sm border border-gray-200 w-full shadow-sm">
+                    <div class="content-area">
+                        <div class="flex items-center gap-2 text-gray-500 text-xs shimmer">
+                            <span class="w-2 h-2 bg-blue-600 rounded-full animate-ping"></span>
+                            <span>Cloud está pensando...</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            group.appendChild(cloudMsg);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            return cloudMsg;
+        }
+
+        async function sendMessage() {
+            const text = userInput.value.trim();
+            const imgBase64 = selectedImageBase64;
+            const imgName = selectedImageFileName;
+
+            if (!text && !imgBase64) return;
+
+            if (!currentSessionId) {
+                const titleSummary = text ? (text.length > 25 ? text.substring(0, 25) + '...' : text) : 'Imagen adjunta';
+                await createNewSession(titleSummary);
+            }
+
+            if (!welcomeView.classList.contains('hidden')) {
+                welcomeView.classList.add('hidden');
+                messageList.classList.remove('hidden');
+                chatContainer.classList.remove('justify-center');
+                chatContainer.classList.add('justify-start');
+            }
+
+            const currentText = text;
+            userInput.value = '';
+            clearSelectedImage();
+
+            // Bloque único para este turno (Consulta + Respuesta)
+            const activeTurnGroup = createQueryTurnContainer();
+
+            appendUserMessageToGroup(activeTurnGroup, currentText, imgBase64);
+
+            const cloudBubble = createCloudLoadingBubble(activeTurnGroup);
+            const contentArea = cloudBubble.querySelector('.content-area');
+
+            try {
+                const res = await fetch(`${API_BASE}/api/messages`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        user_id: userId,
+                        session_id: currentSessionId,
+                        text: currentText,
+                        image_base64: imgBase64,
+                        image_name: imgName
+                    })
+                });
+
+                const result = await res.json();
+                if (result.status === 'success') {
+                    if (result.admin_elevated) {
+                        isAdmin = true;
+                        adminPanelSection.classList.remove('hidden');
+                        showToast("🔑 Golden ID Activado: Administrador");
+                    }
+
+                    const responseText = result.reply;
+                    const renderedHtml = window.marked ? marked.parse(responseText) : escapeHtml(responseText);
+
+                    contentArea.innerHTML = `
+                        <div class="markdown-body text-sm leading-relaxed text-gray-800">${renderedHtml}</div>
+                        <div class="flex items-center gap-3 mt-3 pt-2 text-xs text-gray-500 border-t border-gray-200">
+                            <button class="copy-btn hover:text-gray-900 flex items-center gap-1 transition-colors">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                <span>Copiar</span>
+                            </button>
+                        </div>
+                    `;
+
+                    contentArea.querySelector('.copy-btn').addEventListener('click', async () => {
+                        try {
+                            await navigator.clipboard.writeText(responseText);
+                            showToast("Copiado al portapapeles 📋");
+                        } catch (err) {
+                            showToast("Error al copiar");
+                        }
+                    });
+
+                    loadSessions();
+                } else {
+                    contentArea.innerHTML = `<p class="text-red-500 text-xs">${escapeHtml(result.error || 'Error procesando respuesta')}</p>`;
+                }
+
+            } catch (err) {
+                console.error("Backend Error:", err);
+                contentArea.innerHTML = `<p class="text-red-500 text-xs">Error conectando con Render: ${escapeHtml(err.message)}</p>`;
+            } finally {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        }
+
+        exportAdminBtn.addEventListener('click', () => {
+            if (!isAdmin) return;
+            window.location.href = `${API_BASE}/api/admin/export?user_id=${userId}`;
+        });
+
+        document.querySelectorAll('.suggestion-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const text = btn.querySelector('span:first-child').textContent.replace(/^[💡⚡🔍]\s*/, '');
+                userInput.value = text;
+                sendMessage();
+            });
+        });
+
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+
+        sendBtn.addEventListener('click', sendMessage);
+
+        initAuthAndSessions();
+    });
+    </script>
+</body>
