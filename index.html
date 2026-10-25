@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud AI - Render Connected</title>
+    <title>Cloud AI - Xware</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts -->
@@ -85,7 +85,7 @@
     <div id="sidebarOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-35 opacity-0 pointer-events-none transition-opacity duration-300"></div>
     <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-80 bg-white border-r border-gray-200 flex flex-col transform -translate-x-full transition-transform duration-300 shadow-2xl">
         <div class="p-4 border-b border-gray-200 flex items-center justify-between">
-            <img src="https://i.postimg.cc/90Nnm7PL/cloud.png" alt="Cloud Logo" class="w-8 h-8 object-contain logo-static">
+            <img src="https://i.postimg.cc/DZMhfznn/1000017243-removebg-preview.png" alt="Cloud Logo" class="w-8 h-8 object-contain logo-static">
             <button id="closeSidebarBtn" class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
@@ -170,7 +170,7 @@
     </main>
 
     <footer class="w-full max-w-2xl mx-auto px-4 pb-6 pt-2 z-30">
-        <!-- Contenedor general del Footer con vista previa de imagen si aplica -->
+        <!-- Contenedor general del Footer -->
         <div class="flex flex-col bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border border-gray-200 focus-within:border-blue-400 transition-all p-1.5">
             
             <!-- Vista Previa de Imagen Adjunta -->
@@ -258,9 +258,10 @@
         let charIndex = 0;
         const typingSpeed = 40;
         
+        // RECUPERACIÓN DE ESTADO PERSISTENTE
         let userId = localStorage.getItem('cloud_user_id') || '';
         let userName = localStorage.getItem('cloud_user_name') || '';
-        let currentSessionId = null;
+        let currentSessionId = localStorage.getItem('cloud_current_session_id') || null;
         let isAdmin = false;
 
         attachBtn.addEventListener('click', () => {
@@ -356,6 +357,11 @@
                     }
 
                     await loadSessions();
+
+                    // AUTO-RECUPERAR LA ÚLTIMA SESIÓN ACTIVA SI EXISTE
+                    if (currentSessionId) {
+                        await selectSession(currentSessionId);
+                    }
                 }
             } catch (e) {
                 console.error("Auth error:", e);
@@ -437,6 +443,7 @@
                 const data = await res.json();
                 if (data.status === 'success') {
                     currentSessionId = data.session_id;
+                    localStorage.setItem('cloud_current_session_id', currentSessionId);
                     await loadSessions();
                     return currentSessionId;
                 }
@@ -448,6 +455,7 @@
 
         async function selectSession(sessionId) {
             currentSessionId = sessionId;
+            localStorage.setItem('cloud_current_session_id', sessionId);
             toggleSidebar(false);
             loadSessions();
 
@@ -462,10 +470,9 @@
                     chatContainer.classList.remove('justify-center');
                     chatContainer.classList.add('justify-start');
 
-                    // ORDENAR POR BLOQUES Y CRONOLÓGICAMENTE (PAIR-BASED QUERY RENDER)
                     const sortedMessages = data.messages.sort((a, b) => {
-                        const timeA = a.created_at || a.timestamp || 0;
-                        const timeB = b.created_at || b.timestamp || 0;
+                        const timeA = new Date(a.timestamp || a.created_at || 0).getTime();
+                        const timeB = new Date(b.timestamp || b.created_at || 0).getTime();
                         return timeA - timeB;
                     });
 
@@ -495,6 +502,7 @@
 
         function resetToNewChat() {
             currentSessionId = null;
+            localStorage.removeItem('cloud_current_session_id');
             messageList.innerHTML = '';
             messageList.classList.add('hidden');
             welcomeView.classList.remove('hidden');
@@ -581,6 +589,7 @@
 
             if (!text && !imgBase64) return;
 
+            // SI NO HAY SESIÓN ACTIVA, CREARLA Y GUARDAR EL ID DE INMEDIATO
             if (!currentSessionId) {
                 const titleSummary = text ? (text.length > 25 ? text.substring(0, 25) + '...' : text) : 'Imagen adjunta';
                 await createNewSession(titleSummary);
@@ -597,9 +606,7 @@
             userInput.value = '';
             clearSelectedImage();
 
-            // Bloque único para este turno (Consulta + Respuesta)
             const activeTurnGroup = createQueryTurnContainer();
-
             appendUserMessageToGroup(activeTurnGroup, currentText, imgBase64);
 
             const cloudBubble = createCloudLoadingBubble(activeTurnGroup);
@@ -683,7 +690,9 @@
 
         sendBtn.addEventListener('click', sendMessage);
 
+        // INICIALIZAR FLUJO COMPLETO
         initAuthAndSessions();
     });
     </script>
 </body>
+</html>
