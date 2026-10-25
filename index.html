@@ -6,6 +6,11 @@
     <title>Cloud AI - Xware</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,26 +21,31 @@
     <style>
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            background-color: #ffffff;
-            color: #1f2937;
             overflow-x: hidden;
             height: 100vh;
             height: 100dvh;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         .montserrat-font {
             font-family: 'Montserrat', sans-serif;
         }
 
-        .ambient-bg {
+        /* Ambient backgrounds */
+        body.light-mode {
             background: radial-gradient(circle at 50% 100%, #f0f4f8 0%, #e2e8f0 50%, #ffffff 100%);
+            color: #1f2937;
+        }
+        body.dark-mode {
+            background: radial-gradient(circle at 50% 100%, #0f172a 0%, #0b0f19 50%, #030712 100%);
+            color: #f3f4f6;
         }
 
         ::-webkit-scrollbar {
             width: 5px;
         }
         ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
+            background: #94a3b8;
             border-radius: 4px;
         }
 
@@ -55,7 +65,7 @@
         }
 
         .logo-static {
-            filter: drop-shadow(0 0 12px rgba(37, 99, 235, 0.15));
+            filter: drop-shadow(0 0 12px rgba(37, 99, 235, 0.25));
         }
 
         @keyframes shimmer {
@@ -67,31 +77,42 @@
             animation: shimmer 1.5s infinite ease-in-out;
         }
 
+        /* Markdown styling for clean response output */
         .markdown-body p { margin-bottom: 0.75rem; line-height: 1.6; }
         .markdown-body p:last-child { margin-bottom: 0; }
         .markdown-body ul { list-style-type: disc; padding-left: 1.25rem; margin-bottom: 0.75rem; }
         .markdown-body ol { list-style-type: decimal; padding-left: 1.25rem; margin-bottom: 0.75rem; }
-        .markdown-body pre { background: #f8fafc; padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin-top: 0.5rem; margin-bottom: 0.75rem; border: 1px solid rgba(0,0,0,0.08); color: #1e293b; }
-        .markdown-body code { font-family: monospace; background: rgba(0,0,0,0.06); padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; color: #0f172a; }
+        
+        .light-mode .markdown-body pre { background: #f8fafc; border: 1px solid rgba(0,0,0,0.08); color: #1e293b; }
+        .dark-mode .markdown-body pre { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); color: #f1f5f9; }
+        .markdown-body pre { padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin-top: 0.5rem; margin-bottom: 0.75rem; }
+        
+        .light-mode .markdown-body code { background: rgba(0,0,0,0.06); color: #0f172a; }
+        .dark-mode .markdown-body code { background: rgba(255,255,255,0.12); color: #f8fafc; }
+        .markdown-body code { font-family: monospace; padding: 0.15rem 0.4rem; border-radius: 0.25rem; font-size: 0.875em; }
         .markdown-body pre code { background: transparent; padding: 0; }
-        .markdown-body strong { color: #0f172a; font-weight: 600; }
-        .markdown-body a { color: #2563eb; text-decoration: underline; text-underline-offset: 2px; }
-        .markdown-body blockquote { border-left: 3px solid #3b82f6; padding-left: 0.75rem; color: #4b5563; font-style: italic; margin-bottom: 0.75rem; }
+        
+        .light-mode .markdown-body strong { color: #0f172a; }
+        .dark-mode .markdown-body strong { color: #ffffff; }
+        .markdown-body strong { font-weight: 600; }
+        
+        .markdown-body a { color: #3b82f6; text-decoration: underline; text-underline-offset: 2px; }
+        .markdown-body blockquote { border-left: 3px solid #3b82f6; padding-left: 0.75rem; opacity: 0.85; font-style: italic; margin-bottom: 0.75rem; }
     </style>
 </head>
-<body class="ambient-bg flex flex-col h-screen select-none justify-between overflow-hidden">
+<body class="light-mode flex flex-col h-screen select-none justify-between overflow-hidden">
 
     <!-- Sidebar Overlay & Panel -->
-    <div id="sidebarOverlay" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-35 opacity-0 pointer-events-none transition-opacity duration-300"></div>
-    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-80 bg-white border-r border-gray-200 flex flex-col transform -translate-x-full transition-transform duration-300 shadow-2xl">
-        <div class="p-4 border-b border-gray-200 flex items-center justify-between">
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-35 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+    <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-80 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col transform -translate-x-full transition-transform duration-300 shadow-2xl">
+        <div class="p-4 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
             <img src="https://i.postimg.cc/DZMhfznn/1000017243-removebg-preview.png" alt="Cloud Logo" class="w-8 h-8 object-contain logo-static">
-            <button id="closeSidebarBtn" class="p-1.5 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition-colors">
+            <button id="closeSidebarBtn" class="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500 dark:text-gray-400 transition-colors">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
             </button>
         </div>
         <div class="p-3">
-            <button id="sidebarNewChatBtn" class="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 border border-gray-200 rounded-xl text-xs font-medium text-gray-800 transition-all flex items-center justify-center gap-2">
+            <button id="sidebarNewChatBtn" class="w-full py-2.5 px-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-medium text-gray-800 dark:text-gray-200 transition-all flex items-center justify-center gap-2">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                 <span>Nuevo Chat</span>
             </button>
@@ -99,8 +120,8 @@
         <div id="sessionList" class="flex-1 overflow-y-auto px-3 py-2 flex flex-col gap-1">
             <!-- Dynamic session items inserted here -->
         </div>
-        <div id="adminPanelSection" class="p-4 border-t border-gray-200 hidden">
-            <button id="exportAdminBtn" class="w-full py-2 bg-emerald-50 border border-emerald-300 rounded-xl text-xs text-emerald-700 hover:bg-emerald-100 transition-all flex items-center justify-center gap-1.5">
+        <div id="adminPanelSection" class="p-4 border-t border-gray-200 dark:border-gray-800 hidden">
+            <button id="exportAdminBtn" class="w-full py-2 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-xl text-xs text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 transition-all flex items-center justify-center gap-1.5">
                 <span>📥 Exportar Auditoría JSON</span>
             </button>
         </div>
@@ -109,18 +130,38 @@
     <header class="w-full px-4 pt-3 pb-2 flex items-center justify-between z-30">
         <!-- Left Section: Hamburger Menu -->
         <div class="flex items-center gap-2">
-            <button id="menuBtn" class="p-2 rounded-full hover:bg-gray-200/60 text-gray-700 transition-colors active:scale-95" title="Menú">
+            <button id="menuBtn" class="p-2 rounded-full hover:bg-gray-200/60 dark:hover:bg-gray-800/60 text-gray-700 dark:text-gray-300 transition-colors active:scale-95" title="Menú">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="4" y1="7" x2="20" y2="7"></line>
                     <line x1="4" y1="17" x2="20" y2="17"></line>
                 </svg>
             </button>
-            <span id="headerUserName" class="text-sm font-medium text-gray-700 hidden sm:inline-block">Cloud AI</span>
+            <span id="headerUserName" class="text-sm font-medium text-gray-700 dark:text-gray-300 hidden sm:inline-block">Cloud AI</span>
         </div>
 
-        <!-- Right Section: New Chat Button -->
-        <div class="flex items-center gap-2">
-            <button id="newChatBtn" class="p-2 rounded-full hover:bg-gray-200/60 text-gray-700 transition-colors active:scale-95" title="Nuevo Chat">
+        <!-- Right Section: Theme Toggle + New Chat Button -->
+        <div class="flex items-center gap-1.5">
+            <!-- Theme Toggle Button -->
+            <button id="themeToggleBtn" class="p-2 rounded-full hover:bg-gray-200/60 dark:hover:bg-gray-800/60 text-gray-700 dark:text-gray-300 transition-colors active:scale-95" title="Cambiar Tema">
+                <!-- Sun Icon -->
+                <svg id="sunIcon" class="hidden" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="5"></circle>
+                    <line x1="12" y1="1" x2="12" y2="3"></line>
+                    <line x1="12" y1="21" x2="12" y2="23"></line>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                    <line x1="1" y1="12" x2="3" y2="12"></line>
+                    <line x1="21" y1="12" x2="23" y2="12"></line>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                </svg>
+                <!-- Moon Icon -->
+                <svg id="moonIcon" class="block" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                </svg>
+            </button>
+
+            <button id="newChatBtn" class="p-2 rounded-full hover:bg-gray-200/60 dark:hover:bg-gray-800/60 text-gray-700 dark:text-gray-300 transition-colors active:scale-95" title="Nuevo Chat">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                     <path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/>
                     <path d="M5 3v4"/>
@@ -145,22 +186,22 @@
                 >
             </div>
 
-            <h1 class="montserrat-font text-2xl sm:text-3xl md:text-4xl font-medium text-gray-900 tracking-tight leading-snug max-w-xl min-h-[4rem] sm:min-h-[5rem] flex items-center justify-center flex-wrap">
+            <h1 class="montserrat-font text-2xl sm:text-3xl md:text-4xl font-medium text-gray-900 dark:text-white tracking-tight leading-snug max-w-xl min-h-[4rem] sm:min-h-[5rem] flex items-center justify-center flex-wrap">
                 <span id="typedTitle"></span><span id="cursor" class="typing-cursor"></span>
             </h1>
 
             <div id="suggestionsGrid" class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-8 w-full max-w-xl opacity-0 transition-opacity duration-500">
-                <button class="suggestion-btn text-left p-3.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-2xl transition-all text-xs text-gray-700 hover:text-gray-900 flex flex-col justify-between h-24 shadow-sm">
+                <button class="suggestion-btn text-left p-3.5 bg-gray-50/80 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700/60 rounded-2xl transition-all text-xs text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white flex flex-col justify-between h-24 shadow-sm">
                     <span>💡 Explícame un concepto complejo de forma sencilla</span>
-                    <span class="text-[10px] text-gray-500 font-medium">Análisis inteligente</span>
+                    <span class="text-[10px] text-gray-500 dark:text-gray-400 font-medium">Análisis inteligente</span>
                 </button>
-                <button class="suggestion-btn text-left p-3.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-2xl transition-all text-xs text-gray-700 hover:text-gray-900 flex flex-col justify-between h-24 shadow-sm">
+                <button class="suggestion-btn text-left p-3.5 bg-gray-50/80 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700/60 rounded-2xl transition-all text-xs text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white flex flex-col justify-between h-24 shadow-sm">
                     <span>⚡ ¿Qué es la clave secreta Golden ID?</span>
-                    <span class="text-[10px] text-gray-500 font-medium">Comando especial</span>
+                    <span class="text-[10px] text-gray-500 dark:text-gray-400 font-medium">Comando especial</span>
                 </button>
-                <button class="suggestion-btn text-left p-3.5 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-2xl transition-all text-xs text-gray-700 hover:text-gray-900 flex flex-col justify-between h-24 shadow-sm">
-                    <span>🔍 Analiza las últimas tendencias tecnológicas</span>
-                    <span class="text-[10px] text-gray-500 font-medium">Pensamiento crítico</span>
+                <button class="suggestion-btn text-left p-3.5 bg-gray-50/80 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 border border-gray-200 dark:border-gray-700/60 rounded-2xl transition-all text-xs text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white flex flex-col justify-between h-24 shadow-sm">
+                    <span>🔍 Analiza las últimas noticias de IA en vivo</span>
+                    <span class="text-[10px] text-gray-500 dark:text-gray-400 font-medium">Búsqueda en Vivo</span>
                 </button>
             </div>
         </div>
@@ -170,42 +211,38 @@
     </main>
 
     <footer class="w-full max-w-2xl mx-auto px-4 pb-6 pt-2 z-30">
-        <!-- Contenedor general del Footer -->
-        <div class="flex flex-col bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border border-gray-200 focus-within:border-blue-400 transition-all p-1.5">
+        <div class="flex flex-col bg-white/95 dark:bg-gray-900/95 backdrop-blur-md rounded-3xl shadow-xl border border-gray-200 dark:border-gray-800 focus-within:border-blue-500 transition-all p-1.5">
             
             <!-- Vista Previa de Imagen Adjunta -->
             <div id="imagePreviewContainer" class="hidden px-3 pt-2 pb-1 flex items-center gap-2">
                 <div class="relative group">
-                    <img id="imagePreview" src="" alt="Vista previa" class="w-14 h-14 object-cover rounded-xl border border-gray-200">
+                    <img id="imagePreview" src="" alt="Vista previa" class="w-14 h-14 object-cover rounded-xl border border-gray-200 dark:border-gray-700">
                     <button id="removeImageBtn" type="button" class="absolute -top-1.5 -right-1.5 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 shadow transition-colors">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                 </div>
-                <span id="imageName" class="text-xs text-gray-600 truncate max-w-[150px]"></span>
+                <span id="imageName" class="text-xs text-gray-600 dark:text-gray-400 truncate max-w-[150px]"></span>
             </div>
 
             <!-- Entrada de Texto + Botones -->
             <div class="flex items-center px-2 py-1">
-                <!-- Botón de Adjuntar Imagen -->
                 <input type="file" id="imageInput" accept="image/*" class="hidden">
-                <button id="attachBtn" type="button" class="p-2 rounded-full text-gray-600 hover:bg-gray-100 active:scale-90 transition-all mr-1 flex-shrink-0" title="Subir imagen">
+                <button id="attachBtn" type="button" class="p-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-90 transition-all mr-1 flex-shrink-0" title="Subir imagen">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                     </svg>
                 </button>
 
-                <!-- Input de mensaje -->
                 <input 
                     type="text" 
                     id="userInput"
                     placeholder="Pregunta a Cloud..." 
-                    class="w-full bg-transparent text-gray-900 placeholder-gray-400 focus:outline-none text-base px-2 py-1 font-normal select-text"
+                    class="w-full bg-transparent text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none text-base px-2 py-1 font-normal select-text"
                     autocomplete="off"
                 >
 
-                <!-- Botón de Enviar -->
-                <button id="sendBtn" class="p-2 rounded-full text-gray-600 hover:bg-gray-100 active:scale-90 transition-all ml-1 flex-shrink-0" title="Enviar">
+                <button id="sendBtn" class="p-2 rounded-full text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 active:scale-90 transition-all ml-1 flex-shrink-0" title="Enviar">
                     <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                         <line x1="22" y1="2" x2="11" y2="13"></line>
                         <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
@@ -216,7 +253,7 @@
     </footer>
 
     <!-- Notification Toast -->
-    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 bg-gray-900 text-gray-100 text-xs px-4 py-2.5 rounded-full shadow-lg border border-gray-700 opacity-0 transition-all pointer-events-none z-50 flex items-center gap-2">
+    <div id="toast" class="fixed top-5 left-1/2 -translate-x-1/2 bg-gray-900 dark:bg-gray-100 text-gray-100 dark:text-gray-900 text-xs px-4 py-2.5 rounded-full shadow-lg border border-gray-700 dark:border-gray-300 opacity-0 transition-all pointer-events-none z-50 flex items-center gap-2">
         <span id="toastMsg">Notificación</span>
     </div>
 
@@ -245,6 +282,10 @@
         const toast = document.getElementById('toast');
         const toastMsg = document.getElementById('toastMsg');
 
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const sunIcon = document.getElementById('sunIcon');
+        const moonIcon = document.getElementById('moonIcon');
+
         const attachBtn = document.getElementById('attachBtn');
         const imageInput = document.getElementById('imageInput');
         const imagePreviewContainer = document.getElementById('imagePreviewContainer');
@@ -258,11 +299,38 @@
         let charIndex = 0;
         const typingSpeed = 40;
         
-        // RECUPERACIÓN DE ESTADO PERSISTENTE
         let userId = localStorage.getItem('cloud_user_id') || '';
         let userName = localStorage.getItem('cloud_user_name') || '';
         let currentSessionId = localStorage.getItem('cloud_current_session_id') || null;
         let isAdmin = false;
+
+        // GESTIÓN DE TEMA CLARO / OSCURO
+        let currentTheme = localStorage.getItem('cloud_theme') || 'light';
+
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.documentElement.classList.add('dark');
+                document.body.classList.remove('light-mode');
+                document.body.classList.add('dark-mode');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
+            } else {
+                document.documentElement.classList.remove('dark');
+                document.body.classList.remove('dark-mode');
+                document.body.classList.add('light-mode');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
+            }
+            localStorage.setItem('cloud_theme', theme);
+            currentTheme = theme;
+        }
+
+        applyTheme(currentTheme);
+
+        themeToggleBtn.addEventListener('click', () => {
+            const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(nextTheme);
+        });
 
         attachBtn.addEventListener('click', () => {
             imageInput.click();
@@ -358,7 +426,6 @@
 
                     await loadSessions();
 
-                    // AUTO-RECUPERAR LA ÚLTIMA SESIÓN ACTIVA SI EXISTE
                     if (currentSessionId) {
                         await selectSession(currentSessionId);
                     }
@@ -379,7 +446,7 @@
                 if (data.sessions && data.sessions.length > 0) {
                     data.sessions.forEach(s => {
                         const itemContainer = document.createElement('div');
-                        itemContainer.className = `w-full flex items-center justify-between rounded-xl transition-colors group ${s.session_id === currentSessionId ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`;
+                        itemContainer.className = `w-full flex items-center justify-between rounded-xl transition-colors group ${s.session_id === currentSessionId ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 font-medium' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'}`;
                         
                         const btn = document.createElement('button');
                         btn.className = `flex-1 text-left px-3.5 py-2.5 text-xs truncate`;
@@ -401,7 +468,7 @@
                         sessionList.appendChild(itemContainer);
                     });
                 } else {
-                    sessionList.innerHTML = '<p class="text-xs text-gray-500 px-3 py-2">No hay conversaciones aún.</p>';
+                    sessionList.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400 px-3 py-2">No hay conversaciones aún.</p>';
                 }
             } catch (e) {
                 console.error("Error loading sessions:", e);
@@ -471,8 +538,8 @@
                     chatContainer.classList.add('justify-start');
 
                     const sortedMessages = data.messages.sort((a, b) => {
-                        const timeA = new Date(a.timestamp || a.created_at || 0).getTime();
-                        const timeB = new Date(b.timestamp || b.created_at || 0).getTime();
+                        const timeA = new Date(a.created_at || a.timestamp || 0).getTime();
+                        const timeB = new Date(b.created_at || b.timestamp || 0).getTime();
                         return timeA - timeB;
                     });
 
@@ -526,7 +593,7 @@
 
         function createQueryTurnContainer() {
             const turnGroup = document.createElement('div');
-            turnGroup.className = 'w-full flex flex-col gap-4 border-b border-gray-100 pb-4';
+            turnGroup.className = 'w-full flex flex-col gap-4 border-b border-gray-200/50 dark:border-gray-800/60 pb-4';
             messageList.appendChild(turnGroup);
             return turnGroup;
         }
@@ -537,7 +604,7 @@
             
             let imgHtml = '';
             if (imgBase64) {
-                imgHtml = `<img src="${imgBase64}" class="max-w-xs max-h-60 rounded-xl mb-2 object-cover border border-gray-200 shadow-sm">`;
+                imgHtml = `<img src="${imgBase64}" class="max-w-xs max-h-60 rounded-xl mb-2 object-cover border border-gray-200 dark:border-gray-700 shadow-sm">`;
             }
 
             userMsg.innerHTML = `
@@ -548,32 +615,47 @@
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
+        // RESPUESTA DE CLOUD SIN CAJA (TEXTO DIRECTO CON LÍMITE DE ANCHO)
         function appendCloudMessageToGroup(group, text) {
             const cloudMsg = document.createElement('div');
-            cloudMsg.className = 'self-start flex gap-3 items-start max-w-[92%] sm:max-w-[85%] text-sm text-gray-800 leading-relaxed';
+            cloudMsg.className = 'self-start flex gap-3 items-start max-w-[92%] sm:max-w-[85%] text-sm text-gray-800 dark:text-gray-200 leading-relaxed';
             const renderedHtml = window.marked ? marked.parse(text) : escapeHtml(text);
             
             cloudMsg.innerHTML = `
                 <img src="https://i.postimg.cc/DZMhfznn/1000017243-removebg-preview.png" class="w-6 h-6 object-contain mt-1 flex-shrink-0 logo-static" alt="Cloud">
-                <div class="bg-gray-50 px-5 py-3.5 rounded-2xl rounded-tl-sm border border-gray-200 w-full shadow-sm">
-                    <div class="markdown-body text-sm leading-relaxed text-gray-800">${renderedHtml}</div>
+                <div class="w-full">
+                    <div class="markdown-body text-sm leading-relaxed text-gray-800 dark:text-gray-200">${renderedHtml}</div>
+                    <div class="flex items-center gap-3 mt-3 pt-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800/80">
+                        <button class="copy-btn hover:text-gray-800 dark:hover:text-gray-200 flex items-center gap-1 transition-colors">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            <span>Copiar</span>
+                        </button>
+                    </div>
                 </div>
             `;
+
+            cloudMsg.querySelector('.copy-btn').addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    showToast("Copiado al portapapeles 📋");
+                } catch (err) {
+                    showToast("Error al copiar");
+                }
+            });
+
             group.appendChild(cloudMsg);
             chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
         function createCloudLoadingBubble(group) {
             const cloudMsg = document.createElement('div');
-            cloudMsg.className = 'self-start flex gap-3 items-start max-w-[92%] sm:max-w-[85%] text-sm text-gray-800 leading-relaxed';
+            cloudMsg.className = 'self-start flex gap-3 items-start max-w-[92%] sm:max-w-[85%] text-sm text-gray-800 dark:text-gray-200 leading-relaxed';
             cloudMsg.innerHTML = `
                 <img src="https://i.postimg.cc/DZMhfznn/1000017243-removebg-preview.png" class="w-6 h-6 object-contain mt-1 flex-shrink-0 logo-static" alt="Cloud">
-                <div class="bg-gray-50 px-5 py-3.5 rounded-2xl rounded-tl-sm border border-gray-200 w-full shadow-sm">
-                    <div class="content-area">
-                        <div class="flex items-center gap-2 text-gray-500 text-xs shimmer">
-                            <span class="w-2 h-2 bg-blue-600 rounded-full animate-ping"></span>
-                            <span>Cloud está pensando...</span>
-                        </div>
+                <div class="w-full content-area py-1">
+                    <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs shimmer">
+                        <span class="w-2 h-2 bg-blue-600 rounded-full animate-ping"></span>
+                        <span>Cloud está procesando tu consulta...</span>
                     </div>
                 </div>
             `;
@@ -589,7 +671,6 @@
 
             if (!text && !imgBase64) return;
 
-            // SI NO HAY SESIÓN ACTIVA, CREARLA Y GUARDAR EL ID DE INMEDIATO
             if (!currentSessionId) {
                 const titleSummary = text ? (text.length > 25 ? text.substring(0, 25) + '...' : text) : 'Imagen adjunta';
                 await createNewSession(titleSummary);
@@ -637,9 +718,9 @@
                     const renderedHtml = window.marked ? marked.parse(responseText) : escapeHtml(responseText);
 
                     contentArea.innerHTML = `
-                        <div class="markdown-body text-sm leading-relaxed text-gray-800">${renderedHtml}</div>
-                        <div class="flex items-center gap-3 mt-3 pt-2 text-xs text-gray-500 border-t border-gray-200">
-                            <button class="copy-btn hover:text-gray-900 flex items-center gap-1 transition-colors">
+                        <div class="markdown-body text-sm leading-relaxed text-gray-800 dark:text-gray-200">${renderedHtml}</div>
+                        <div class="flex items-center gap-3 mt-3 pt-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800/80">
+                            <button class="copy-btn hover:text-gray-800 dark:hover:text-gray-200 flex items-center gap-1 transition-colors">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                                 <span>Copiar</span>
                             </button>
@@ -690,7 +771,6 @@
 
         sendBtn.addEventListener('click', sendMessage);
 
-        // INICIALIZAR FLUJO COMPLETO
         initAuthAndSessions();
     });
     </script>
