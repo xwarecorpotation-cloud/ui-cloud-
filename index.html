@@ -432,9 +432,37 @@
             applyTheme(nextTheme);
         });
 
-        headerGalleryBtn.addEventListener('click', () => {
+        headerGalleryBtn.addEventListener('click', async () => {
+    // Intentar solicitar acceso mediante la API moderna de archivos (si el navegador la soporta)
+    if (window.showOpenFilePicker) {
+        try {
+            const [fileHandle] = await window.showOpenFilePicker({
+                types: [{
+                    description: 'Imágenes',
+                    accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.gif'] }
+                }],
+                multiple: false
+            });
+            const file = await fileHandle.getFile();
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                selectedImageBase64 = event.target.result;
+                selectedImageFileName = file.name;
+                imagePreview.src = selectedImageBase64;
+                imageName.textContent = file.name;
+                imagePreviewContainer.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+            return;
+        } catch (err) {
+            // Si el usuario rechaza el permiso o cancela el cuadro de diálogo, aplicamos el respaldo normal
             imageInput.click();
-        });
+            return;
+        }
+    }
+    // Respaldo automático para móviles y navegadores que usan el input file clásico
+    imageInput.click();
+});
 
         attachBtn.addEventListener('click', () => {
             imageInput.click();
