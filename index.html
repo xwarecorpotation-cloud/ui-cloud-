@@ -329,431 +329,563 @@
     </div>
 
     <script>
-   document.addEventListener('DOMContentLoaded', () => {
-        const API_BASE = 'https://cloud-es7z.onrender.com';
+  <script>
+document.addEventListener('DOMContentLoaded', () => {
+    const API_BASE = 'https://cloud-es7z.onrender.com';
+    // Reemplaza esta URL por la de tu microservicio de visión en Render si fuera distinta:
+    const VISION_API_URL = 'https://img-visor-for-cloud-chat.onrender.com/api/vision';
 
-        const fullText = "Hola, soy Cloud, ¿en qué te puedo ayudar?";
-        const typedTitleEl = document.getElementById('typedTitle');
-        const suggestionsGrid = document.getElementById('suggestionsGrid');
-        const userInput = document.getElementById('userInput');
-        const sendBtn = document.getElementById('sendBtn');
-        const welcomeView = document.getElementById('welcomeView');
-        const messageList = document.getElementById('messageList');
-        const chatContainer = document.getElementById('chatContainer');
-        const newChatBtn = document.getElementById('newChatBtn');
-        const sidebarNewChatBtn = document.getElementById('sidebarNewChatBtn');
-        const menuBtn = document.getElementById('menuBtn');
-        const closeSidebarBtn = document.getElementById('closeSidebarBtn');
-        const sidebar = document.getElementById('sidebar');
-        const sidebarOverlay = document.getElementById('sidebarOverlay');
-        const sessionList = document.getElementById('sessionList');
-        const adminPanelSection = document.getElementById('adminPanelSection');
-        const exportAdminBtn = document.getElementById('exportAdminBtn');
-        const headerUserName = document.getElementById('headerUserName');
-        const toast = document.getElementById('toast');
-        const toastMsg = document.getElementById('toastMsg');
+    const fullText = "Hola, soy Cloud, ¿en qué te puedo ayudar?";
+    const typedTitleEl = document.getElementById('typedTitle');
+    const suggestionsGrid = document.getElementById('suggestionsGrid');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
+    const welcomeView = document.getElementById('welcomeView');
+    const messageList = document.getElementById('messageList');
+    const chatContainer = document.getElementById('chatContainer');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const sidebarNewChatBtn = document.getElementById('sidebarNewChatBtn');
+    const menuBtn = document.getElementById('menuBtn');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+    const sidebar = document.getElementById('sidebar');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const sessionList = document.getElementById('sessionList');
+    const adminPanelSection = document.getElementById('adminPanelSection');
+    const exportAdminBtn = document.getElementById('exportAdminBtn');
+    const headerUserName = document.getElementById('headerUserName');
+    const toast = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMsg');
 
-        const themeToggleBtn = document.getElementById('themeToggleBtn');
-        const headerGalleryBtn = document.getElementById('headerGalleryBtn');
-        const sunIcon = document.getElementById('sunIcon');
-        const moonIcon = document.getElementById('moonIcon');
+    const themeToggleBtn = document.getElementById('themeToggleBtn');
+    const headerGalleryBtn = document.getElementById('headerGalleryBtn');
+    const sunIcon = document.getElementById('sunIcon');
+    const moonIcon = document.getElementById('moonIcon');
 
-        const attachBtn = document.getElementById('attachBtn');
-        const imageInput = document.getElementById('imageInput');
-        const imagePreviewContainer = document.getElementById('imagePreviewContainer');
-        const imagePreview = document.getElementById('imagePreview');
-        const imageName = document.getElementById('imageName');
-        const removeImageBtn = document.getElementById('removeImageBtn');
+    const attachBtn = document.getElementById('attachBtn');
+    const imageInput = document.getElementById('imageInput');
+    const imagePreviewContainer = document.getElementById('imagePreviewContainer');
+    const imagePreview = document.getElementById('imagePreview');
+    const imageName = document.getElementById('imageName');
+    const removeImageBtn = document.getElementById('removeImageBtn');
 
-        const glassFeatureModal = document.getElementById('glassFeatureModal');
-        const closeGlassModalBtn = document.getElementById('closeGlassModalBtn');
+    const glassFeatureModal = document.getElementById('glassFeatureModal');
+    const closeGlassModalBtn = document.getElementById('closeGlassModalBtn');
 
-        let selectedImageBase64 = null;
-        let selectedImageFileName = null;
+    let selectedImageBase64 = null;
+    let selectedImageFileName = null;
 
-        let charIndex = 0;
-        const typingSpeed = 40;
-        
-        let userId = localStorage.getItem('cloud_user_id') || '';
-        let userName = localStorage.getItem('cloud_user_name') || '';
-        let currentSessionId = localStorage.getItem('cloud_current_session_id') || null;
-        let isAdmin = false;
+    let charIndex = 0;
+    const typingSpeed = 40;
+    
+    let userId = localStorage.getItem('cloud_user_id') || '';
+    let userName = localStorage.getItem('cloud_user_name') || '';
+    let currentSessionId = localStorage.getItem('cloud_current_session_id') || null;
+    let isAdmin = false;
 
-        // POPUP GLASSMORPHISM DE 1 SOLA VEZ POR USUARIO
-        function checkAndShowFeatureModal() {
-            const hasSeenModal = localStorage.getItem('cloud_feature_modal_seen');
-            if (!hasSeenModal) {
-                setTimeout(() => {
-                    glassFeatureModal.classList.remove('opacity-0', 'pointer-events-none');
-                    const card = glassFeatureModal.querySelector('.glass-modal-card');
-                    if (card) {
-                        card.classList.remove('scale-95');
-                        card.classList.add('scale-100');
-                    }
-                }, 600);
-            }
-        }
-
-        closeGlassModalBtn.addEventListener('click', () => {
-            const card = glassFeatureModal.querySelector('.glass-modal-card');
-            if (card) {
-                card.classList.remove('scale-100');
-                card.classList.add('scale-95');
-            }
-            glassFeatureModal.classList.add('opacity-0', 'pointer-events-none');
-            localStorage.setItem('cloud_feature_modal_seen', 'true');
-        });
-
-        // GESTIÓN DE TEMA CLARO / OSCURO
-        let currentTheme = localStorage.getItem('cloud_theme') || 'light';
-
-        function applyTheme(theme) {
-            if (theme === 'dark') {
-                document.documentElement.classList.add('dark');
-                document.body.classList.remove('light-mode');
-                document.body.classList.add('dark-mode');
-                sunIcon.classList.remove('hidden');
-                moonIcon.classList.add('hidden');
-            } else {
-                document.documentElement.classList.remove('dark');
-                document.body.classList.remove('dark-mode');
-                document.body.classList.add('light-mode');
-                sunIcon.classList.add('hidden');
-                moonIcon.classList.remove('hidden');
-            }
-            localStorage.setItem('cloud_theme', theme);
-            currentTheme = theme;
-        }
-
-        applyTheme(currentTheme);
-
-        themeToggleBtn.addEventListener('click', () => {
-            const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
-            applyTheme(nextTheme);
-        });
-
-        headerGalleryBtn.addEventListener('click', async () => {
-            if (window.showOpenFilePicker) {
-                try {
-                    const [fileHandle] = await window.showOpenFilePicker({
-                        types: [{
-                            description: 'Imágenes',
-                            accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.gif'] }
-                        }],
-                        multiple: false
-                    });
-                    const file = await fileHandle.getFile();
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        selectedImageBase64 = event.target.result;
-                        selectedImageFileName = file.name;
-                        imagePreview.src = selectedImageBase64;
-                        imageName.textContent = file.name;
-                        imagePreviewContainer.classList.remove('hidden');
-                    };
-                    reader.readAsDataURL(file);
-                    return;
-                } catch (err) {
-                    imageInput.click();
-                    return;
+    // POPUP GLASSMORPHISM
+    function checkAndShowFeatureModal() {
+        const hasSeenModal = localStorage.getItem('cloud_feature_modal_seen');
+        if (!hasSeenModal) {
+            setTimeout(() => {
+                glassFeatureModal.classList.remove('opacity-0', 'pointer-events-none');
+                const card = glassFeatureModal.querySelector('.glass-modal-card');
+                if (card) {
+                    card.classList.remove('scale-95');
+                    card.classList.add('scale-100');
                 }
-            }
-            imageInput.click();
-        });
+            }, 600);
+        }
+    }
 
-        attachBtn.addEventListener('click', () => {
-            imageInput.click();
-        });
+    closeGlassModalBtn.addEventListener('click', () => {
+        const card = glassFeatureModal.querySelector('.glass-modal-card');
+        if (card) {
+            card.classList.remove('scale-100');
+            card.classList.add('scale-95');
+        }
+        glassFeatureModal.classList.add('opacity-0', 'pointer-events-none');
+        localStorage.setItem('cloud_feature_modal_seen', 'true');
+    });
 
-        imageInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
+    // GESTIÓN DE TEMA CLARO / OSCURO
+    let currentTheme = localStorage.getItem('cloud_theme') || 'light';
 
-            if (!file.type.startsWith('image/')) {
-                showToast("Por favor selecciona un archivo de imagen válido");
-                imageInput.value = '';
+    function applyTheme(theme) {
+        if (theme === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.body.classList.remove('light-mode');
+            document.body.classList.add('dark-mode');
+            sunIcon.classList.remove('hidden');
+            moonIcon.classList.add('hidden');
+        } else {
+            document.documentElement.classList.remove('dark');
+            document.body.classList.remove('dark-mode');
+            document.body.classList.add('light-mode');
+            sunIcon.classList.add('hidden');
+            moonIcon.classList.remove('hidden');
+        }
+        localStorage.setItem('cloud_theme', theme);
+        currentTheme = theme;
+    }
+
+    applyTheme(currentTheme);
+
+    themeToggleBtn.addEventListener('click', () => {
+        const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
+        applyTheme(nextTheme);
+    });
+
+    headerGalleryBtn.addEventListener('click', async () => {
+        if (window.showOpenFilePicker) {
+            try {
+                const [fileHandle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'Imágenes',
+                        accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.gif'] }
+                    }],
+                    multiple: false
+                });
+                const file = await fileHandle.getFile();
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    selectedImageBase64 = event.target.result;
+                    selectedImageFileName = file.name;
+                    imagePreview.src = selectedImageBase64;
+                    imageName.textContent = file.name;
+                    imagePreviewContainer.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+                return;
+            } catch (err) {
+                imageInput.click();
                 return;
             }
+        }
+        imageInput.click();
+    });
 
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                selectedImageBase64 = event.target.result;
-                selectedImageFileName = file.name;
+    attachBtn.addEventListener('click', () => {
+        imageInput.click();
+    });
 
-                imagePreview.src = selectedImageBase64;
-                imageName.textContent = file.name;
-                imagePreviewContainer.classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-        });
+    imageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
 
-        function clearSelectedImage() {
-            selectedImageBase64 = null;
-            selectedImageFileName = null;
+        if (!file.type.startsWith('image/')) {
+            showToast("Por favor selecciona un archivo de imagen válido");
             imageInput.value = '';
-            imagePreview.src = '';
-            imageName.textContent = '';
-            imagePreviewContainer.classList.add('hidden');
+            return;
         }
 
-        removeImageBtn.addEventListener('click', clearSelectedImage);
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            selectedImageBase64 = event.target.result;
+            selectedImageFileName = file.name;
 
-        function typeWriter() {
-            if (charIndex < fullText.length) {
-                typedTitleEl.textContent += fullText.charAt(charIndex);
-                charIndex++;
-                setTimeout(typeWriter, typingSpeed);
-            } else {
-                if (suggestionsGrid) suggestionsGrid.classList.remove('opacity-0');
-            }
+            imagePreview.src = selectedImageBase64;
+            imageName.textContent = file.name;
+            imagePreviewContainer.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+    });
+
+    function clearSelectedImage() {
+        selectedImageBase64 = null;
+        selectedImageFileName = null;
+        imageInput.value = '';
+        imagePreview.src = '';
+        imageName.textContent = '';
+        imagePreviewContainer.classList.add('hidden');
+    }
+
+    removeImageBtn.addEventListener('click', clearSelectedImage);
+
+    function typeWriter() {
+        if (charIndex < fullText.length) {
+            typedTitleEl.textContent += fullText.charAt(charIndex);
+            charIndex++;
+            setTimeout(typeWriter, typingSpeed);
+        } else {
+            if (suggestionsGrid) suggestionsGrid.classList.remove('opacity-0');
         }
-        setTimeout(typeWriter, 300);
+    }
+    setTimeout(typeWriter, 300);
 
-        function showToast(msg) {
-            toastMsg.textContent = msg;
-            toast.classList.remove('opacity-0', 'pointer-events-none');
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'pointer-events-none');
-            }, 3000);
+    function showToast(msg) {
+        toastMsg.textContent = msg;
+        toast.classList.remove('opacity-0', 'pointer-events-none');
+        setTimeout(() => {
+            toast.classList.add('opacity-0', 'pointer-events-none');
+        }, 3000);
+    }
+
+    function toggleSidebar(open) {
+        if (open) {
+            sidebar.classList.remove('-translate-x-full');
+            sidebarOverlay.classList.remove('opacity-0', 'pointer-events-none');
+        } else {
+            sidebar.classList.add('-translate-x-full');
+            sidebarOverlay.classList.add('opacity-0', 'pointer-events-none');
         }
+    }
 
-        function toggleSidebar(open) {
-            if (open) {
-                sidebar.classList.remove('-translate-x-full');
-                sidebarOverlay.classList.remove('opacity-0', 'pointer-events-none');
-            } else {
-                sidebar.classList.add('-translate-x-full');
-                sidebarOverlay.classList.add('opacity-0', 'pointer-events-none');
-            }
-        }
+    menuBtn.addEventListener('click', () => toggleSidebar(true));
+    closeSidebarBtn.addEventListener('click', () => toggleSidebar(false));
+    sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
 
-        menuBtn.addEventListener('click', () => toggleSidebar(true));
-        closeSidebarBtn.addEventListener('click', () => toggleSidebar(false));
-        sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
-
-        async function initAuthAndSessions() {
-            try {
-                const res = await fetch(`${API_BASE}/api/auth`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, name: userName })
-                });
-                const data = await res.json();
-                if (data.status === 'success') {
-                    userId = data.user_id;
-                    userName = data.name;
-                    isAdmin = data.is_admin;
-                    
-                    localStorage.setItem('cloud_user_id', userId);
-                    localStorage.setItem('cloud_user_name', userName);
-                    
-                    headerUserName.textContent = `Cloud AI (${userName})`;
-
-                    if (isAdmin) {
-                        adminPanelSection.classList.remove('hidden');
-                    }
-
-                    await loadSessions();
-
-                    if (currentSessionId) {
-                        await selectSession(currentSessionId);
-                    }
-                }
-            } catch (e) {
-                console.error("Auth error:", e);
-                showToast("No se pudo conectar con el servidor en Render");
-            } finally {
-                checkAndShowFeatureModal();
-            }
-        }
-
-        async function loadSessions() {
-            if (!userId) return;
-            try {
-                const res = await fetch(`${API_BASE}/api/sessions?user_id=${userId}`);
-                const data = await res.json();
-                sessionList.innerHTML = '';
+    async function initAuthAndSessions() {
+        try {
+            const res = await fetch(`${API_BASE}/api/auth`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, name: userName })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                userId = data.user_id;
+                userName = data.name;
+                isAdmin = data.is_admin;
                 
-                if (data.sessions && data.sessions.length > 0) {
-                    data.sessions.forEach(s => {
-                        const itemContainer = document.createElement('div');
-                        itemContainer.className = `w-full flex items-center justify-between rounded-xl transition-colors group ${s.session_id === currentSessionId ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 font-medium' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'}`;
-                        
-                        const btn = document.createElement('button');
-                        btn.className = `flex-1 text-left px-3.5 py-2.5 text-xs truncate`;
-                        btn.innerHTML = `<span class="truncate">${escapeHtml(s.title || 'Nueva Conversación')}</span>`;
-                        btn.addEventListener('click', () => selectSession(s.session_id));
-                        
-                        const deleteBtn = document.createElement('button');
-                        deleteBtn.className = `p-2 text-gray-400 hover:text-red-500 transition-colors mr-1 opacity-0 group-hover:opacity-100 focus:opacity-100`;
-                        deleteBtn.title = "Eliminar conversación";
-                        deleteBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
-                        
-                        deleteBtn.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            deleteSession(s.session_id);
-                        });
+                localStorage.setItem('cloud_user_id', userId);
+                localStorage.setItem('cloud_user_name', userName);
+                
+                headerUserName.textContent = `Cloud AI (${userName})`;
 
-                        itemContainer.appendChild(btn);
-                        itemContainer.appendChild(deleteBtn);
-                        sessionList.appendChild(itemContainer);
+                if (isAdmin) {
+                    adminPanelSection.classList.remove('hidden');
+                }
+
+                await loadSessions();
+
+                if (currentSessionId) {
+                    await selectSession(currentSessionId);
+                }
+            }
+        } catch (e) {
+            console.error("Auth error:", e);
+            showToast("No se pudo conectar con el servidor principal");
+        } finally {
+            checkAndShowFeatureModal();
+        }
+    }
+
+    async function loadSessions() {
+        if (!userId) return;
+        try {
+            const res = await fetch(`${API_BASE}/api/sessions?user_id=${userId}`);
+            const data = await res.json();
+            sessionList.innerHTML = '';
+            
+            if (data.sessions && data.sessions.length > 0) {
+                data.sessions.forEach(s => {
+                    const itemContainer = document.createElement('div');
+                    itemContainer.className = `w-full flex items-center justify-between rounded-xl transition-colors group ${s.session_id === currentSessionId ? 'bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 font-medium' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'}`;
+                    
+                    const btn = document.createElement('button');
+                    btn.className = `flex-1 text-left px-3.5 py-2.5 text-xs truncate`;
+                    btn.innerHTML = `<span class="truncate">${escapeHtml(s.title || 'Nueva Conversación')}</span>`;
+                    btn.addEventListener('click', () => selectSession(s.session_id));
+                    
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = `p-2 text-gray-400 hover:text-red-500 transition-colors mr-1 opacity-0 group-hover:opacity-100 focus:opacity-100`;
+                    deleteBtn.title = "Eliminar conversación";
+                    deleteBtn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+                    
+                    deleteBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        deleteSession(s.session_id);
                     });
-                } else {
-                    sessionList.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400 px-3 py-2">No hay conversaciones aún.</p>';
-                }
-            } catch (e) {
-                console.error("Error loading sessions:", e);
-            }
-        }
 
-        async function deleteSession(sessionId) {
-            if (!confirm("¿Estás seguro de que deseas eliminar esta conversación?")) return;
-            try {
-                const res = await fetch(`${API_BASE}/api/sessions`, {
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ session_id: sessionId, user_id: userId })
+                    itemContainer.appendChild(btn);
+                    itemContainer.appendChild(deleteBtn);
+                    sessionList.appendChild(itemContainer);
                 });
-                const data = await res.json();
-                if (data.status === 'success' || res.ok) {
-                    showToast("Conversación eliminada");
-                    if (currentSessionId === sessionId) {
-                        resetToNewChat();
-                    } else {
-                        await loadSessions();
-                    }
-                } else {
-                    showToast("No se pudo eliminar la conversación");
-                }
-            } catch (e) {
-                console.error("Error deleting session:", e);
-                showToast("Error al intentar eliminar la conversación");
+            } else {
+                sessionList.innerHTML = '<p class="text-xs text-gray-500 dark:text-gray-400 px-3 py-2">No hay conversaciones aún.</p>';
             }
+        } catch (e) {
+            console.error("Error loading sessions:", e);
         }
+    }
 
-        async function createNewSession(title = 'Nueva Conversación') {
-            try {
-                const res = await fetch(`${API_BASE}/api/sessions`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_id: userId, title: title })
-                });
-                const data = await res.json();
-                if (data.status === 'success') {
-                    currentSessionId = data.session_id;
-                    localStorage.setItem('cloud_current_session_id', currentSessionId);
+    async function deleteSession(sessionId) {
+        if (!confirm("¿Estás seguro de que deseas eliminar esta conversación?")) return;
+        try {
+            const res = await fetch(`${API_BASE}/api/sessions`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: sessionId, user_id: userId })
+            });
+            const data = await res.json();
+            if (data.status === 'success' || res.ok) {
+                showToast("Conversación eliminada");
+                if (currentSessionId === sessionId) {
+                    resetToNewChat();
+                } else {
                     await loadSessions();
-                    return currentSessionId;
                 }
-            } catch (e) {
-                console.error("Error creating session:", e);
+            } else {
+                showToast("No se pudo eliminar la conversación");
             }
-            return null;
+        } catch (e) {
+            console.error("Error deleting session:", e);
+            showToast("Error al intentar eliminar la conversación");
         }
+    }
 
-        async function selectSession(sessionId) {
-            currentSessionId = sessionId;
-            localStorage.setItem('cloud_current_session_id', sessionId);
-            toggleSidebar(false);
-            loadSessions();
-
-            try {
-                const res = await fetch(`${API_BASE}/api/messages?session_id=${sessionId}`);
-                const data = await res.json();
-                messageList.innerHTML = '';
-
-                if (data.messages && data.messages.length > 0) {
-                    welcomeView.classList.add('hidden');
-                    messageList.classList.remove('hidden');
-                    chatContainer.classList.remove('justify-center');
-                    chatContainer.classList.add('justify-start');
-
-                    const sortedMessages = data.messages.sort((a, b) => {
-                        const timeA = new Date(a.created_at || a.timestamp || 0).getTime();
-                        const timeB = new Date(b.created_at || b.timestamp || 0).getTime();
-                        return timeA - timeB;
-                    });
-
-                    let currentTurnGroup = null;
-
-                    sortedMessages.forEach(msg => {
-                        if (msg.sender === 'user') {
-                            currentTurnGroup = createQueryTurnContainer();
-                            appendUserMessageToGroup(currentTurnGroup, msg.text, msg.image_base64);
-                        } else {
-                            if (!currentTurnGroup) {
-                                currentTurnGroup = createQueryTurnContainer();
-                            }
-                            appendCloudMessageToGroup(currentTurnGroup, msg.text);
-                        }
-                    });
-                } else {
-                    messageList.classList.add('hidden');
-                    welcomeView.classList.remove('hidden');
-                    chatContainer.classList.add('justify-center');
-                    chatContainer.classList.remove('justify-start');
-                }
-            } catch (e) {
-                console.error("Error loading messages:", e);
+    async function createNewSession(title = 'Nueva Conversación') {
+        try {
+            const res = await fetch(`${API_BASE}/api/sessions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ user_id: userId, title: title })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                currentSessionId = data.session_id;
+                localStorage.setItem('cloud_current_session_id', currentSessionId);
+                await loadSessions();
+                return currentSessionId;
             }
+        } catch (e) {
+            console.error("Error creating session:", e);
         }
+        return null;
+    }
 
-        function resetToNewChat() {
-            currentSessionId = null;
-            localStorage.removeItem('cloud_current_session_id');
+    async function selectSession(sessionId) {
+        currentSessionId = sessionId;
+        localStorage.setItem('cloud_current_session_id', sessionId);
+        toggleSidebar(false);
+        loadSessions();
+
+        try {
+            const res = await fetch(`${API_BASE}/api/messages?session_id=${sessionId}`);
+            const data = await res.json();
             messageList.innerHTML = '';
-            messageList.classList.add('hidden');
-            welcomeView.classList.remove('hidden');
-            chatContainer.classList.add('justify-center');
-            chatContainer.classList.remove('justify-start');
-            clearSelectedImage();
-            loadSessions();
-            showToast("Nueva conversación iniciada ✨");
+
+            if (data.messages && data.messages.length > 0) {
+                welcomeView.classList.add('hidden');
+                messageList.classList.remove('hidden');
+                chatContainer.classList.remove('justify-center');
+                chatContainer.classList.add('justify-start');
+
+                const sortedMessages = data.messages.sort((a, b) => {
+                    const timeA = new Date(a.created_at || a.timestamp || 0).getTime();
+                    const timeB = new Date(b.created_at || b.timestamp || 0).getTime();
+                    return timeA - timeB;
+                });
+
+                let currentTurnGroup = null;
+
+                sortedMessages.forEach(msg => {
+                    if (msg.sender === 'user') {
+                        currentTurnGroup = createQueryTurnContainer();
+                        // Se pinta el texto limpio del usuario y su imagen guardada en Supabase
+                        appendUserMessageToGroup(currentTurnGroup, msg.text, msg.image_base64);
+                    } else {
+                        if (!currentTurnGroup) {
+                            currentTurnGroup = createQueryTurnContainer();
+                        }
+                        appendCloudMessageToGroup(currentTurnGroup, msg.text);
+                    }
+                });
+            } else {
+                messageList.classList.add('hidden');
+                welcomeView.classList.remove('hidden');
+                chatContainer.classList.add('justify-center');
+                chatContainer.classList.remove('justify-start');
+            }
+        } catch (e) {
+            console.error("Error loading messages:", e);
+        }
+    }
+
+    function resetToNewChat() {
+        currentSessionId = null;
+        localStorage.removeItem('cloud_current_session_id');
+        messageList.innerHTML = '';
+        messageList.classList.add('hidden');
+        welcomeView.classList.remove('hidden');
+        chatContainer.classList.add('justify-center');
+        chatContainer.classList.remove('justify-start');
+        clearSelectedImage();
+        loadSessions();
+        showToast("Nueva conversación iniciada ✨");
+    }
+
+    newChatBtn.addEventListener('click', resetToNewChat);
+    sidebarNewChatBtn.addEventListener('click', () => {
+        toggleSidebar(false);
+        resetToNewChat();
+    });
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    }
+
+    function createQueryTurnContainer() {
+        const turnGroup = document.createElement('div');
+        turnGroup.className = 'w-full flex flex-col gap-4 border-b border-gray-200/50 dark:border-gray-800/60 pb-4';
+        messageList.appendChild(turnGroup);
+        return turnGroup;
+    }
+
+    function appendUserMessageToGroup(group, text, imgBase64 = null) {
+        const userMsg = document.createElement('div');
+        userMsg.className = 'self-end flex flex-col items-end max-w-[85%]';
+        
+        let imgHtml = '';
+        if (imgBase64) {
+            imgHtml = `<img src="${imgBase64}" class="max-w-xs max-h-60 rounded-xl mb-2 object-cover border border-gray-200 dark:border-gray-700 shadow-sm">`;
         }
 
-        newChatBtn.addEventListener('click', resetToNewChat);
-        sidebarNewChatBtn.addEventListener('click', () => {
-            toggleSidebar(false);
-            resetToNewChat();
+        userMsg.innerHTML = `
+            ${imgHtml}
+            ${text ? `<div class="bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-tr-sm text-sm leading-relaxed shadow-sm">${escapeHtml(text)}</div>` : ''}
+        `;
+        group.appendChild(userMsg);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function appendCloudMessageToGroup(group, text) {
+        const cloudMsg = document.createElement('div');
+        cloudMsg.className = 'self-start flex gap-3 items-start max-w-[92%] sm:max-w-[85%] text-sm text-gray-800 dark:text-gray-200 leading-relaxed';
+        const renderedHtml = window.marked ? marked.parse(text) : escapeHtml(text);
+        
+        cloudMsg.innerHTML = `
+            <img src="https://i.postimg.cc/DZMhfznn/1000017243-removebg-preview.png" class="w-6 h-6 object-contain mt-1 flex-shrink-0 logo-static" alt="Cloud">
+            <div class="w-full">
+                <div class="markdown-body text-sm leading-relaxed text-gray-800 dark:text-gray-200">${renderedHtml}</div>
+                <div class="flex items-center gap-3 mt-3 pt-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800/80">
+                    <button class="copy-btn hover:text-gray-800 dark:hover:text-gray-200 flex items-center gap-1 transition-colors">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        <span>Copiar</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        cloudMsg.querySelector('.copy-btn').addEventListener('click', async () => {
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast("Copiado al portapapeles 📋");
+            } catch (err) {
+                showToast("Error al copiar");
+            }
         });
 
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-        }
+        group.appendChild(cloudMsg);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
 
-        function createQueryTurnContainer() {
-            const turnGroup = document.createElement('div');
-            turnGroup.className = 'w-full flex flex-col gap-4 border-b border-gray-200/50 dark:border-gray-800/60 pb-4';
-            messageList.appendChild(turnGroup);
-            return turnGroup;
-        }
+    function createCloudLoadingBubble(group) {
+        const cloudMsg = document.createElement('div');
+        cloudMsg.className = 'self-start flex gap-3 items-start max-w-[92%] sm:max-w-[85%] text-sm text-gray-800 dark:text-gray-200 leading-relaxed';
+        cloudMsg.innerHTML = `
+            <img src="https://i.postimg.cc/DZMhfznn/1000017243-removebg-preview.png" class="w-6 h-6 object-contain mt-1 flex-shrink-0 logo-static" alt="Cloud">
+            <div class="w-full content-area py-1">
+                <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs shimmer">
+                    <span class="w-2 h-2 bg-blue-600 rounded-full animate-ping"></span>
+                    <span>Cloud está observando la imagen...</span>
+                </div>
+            </div>
+        `;
+        group.appendChild(cloudMsg);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+        return cloudMsg;
+    }
 
-        function appendUserMessageToGroup(group, text, imgBase64 = null) {
-            const userMsg = document.createElement('div');
-            userMsg.className = 'self-end flex flex-col items-end max-w-[85%]';
-            
-            let imgHtml = '';
-            if (imgBase64) {
-                imgHtml = `<img src="${imgBase64}" class="max-w-xs max-h-60 rounded-xl mb-2 object-cover border border-gray-200 dark:border-gray-700 shadow-sm">`;
+    // ==========================================
+    // ENVÍO DE MENSAJES + PUENTE DE VISIÓN Y GUARDADO LIMPIO
+    // ==========================================
+    async function sendMessage() {
+        const text = userInput.value.trim();
+        const imgBase64 = selectedImageBase64;
+        const imgName = selectedImageFileName;
+
+        if (!text && !imgBase64) return;
+
+        let aiPayloadText = text || "Explícame detalladamente qué ves en esta imagen.";
+
+        // 1. PUENTE DE VISIÓN SILENCIOSO
+        if (imgBase64) {
+            showToast("Cloud está observando los detalles de tu foto...");
+            try {
+                const visionRes = await fetch(VISION_API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image_base64: imgBase64 })
+                });
+                
+                const visionData = await visionRes.json();
+                if (visionData.status === 'success') {
+                    const hyperDesc = visionData.hyper_perception;
+                    // Preparamos el contexto visual para la IA por detrás
+                    aiPayloadText = `[Contexto visual analizado por el visor Xware: ${hyperDesc}]\n\nPregunta del usuario: ${text || "Explícame detalladamente qué ves en esta imagen."}`;
+                } else {
+                    showToast("Vaya, me ha costado un segundo conectar con la imagen, probemos de nuevo.");
+                    return;
+                }
+            } catch (err) {
+                console.error("Vision Service Error:", err);
+                showToast("No se pudo conectar con el servicio de visión");
+                return;
             }
-
-            userMsg.innerHTML = `
-                ${imgHtml}
-                ${text ? `<div class="bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-tr-sm text-sm leading-relaxed shadow-sm">${escapeHtml(text)}</div>` : ''}
-            `;
-            group.appendChild(userMsg);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
-        function appendCloudMessageToGroup(group, text) {
-            const cloudMsg = document.createElement('div');
-            cloudMsg.className = 'self-start flex gap-3 items-start max-w-[92%] sm:max-w-[85%] text-sm text-gray-800 dark:text-gray-200 leading-relaxed';
-            const renderedHtml = window.marked ? marked.parse(text) : escapeHtml(text);
-            
-            cloudMsg.innerHTML = `
-                <img src="https://i.postimg.cc/DZMhfznn/1000017243-removebg-preview.png" class="w-6 h-6 object-contain mt-1 flex-shrink-0 logo-static" alt="Cloud">
-                <div class="w-full">
+        if (!currentSessionId) {
+            const titleSummary = text ? (text.length > 25 ? text.substring(0, 25) + '...' : text) : 'Imagen adjunta';
+            await createNewSession(titleSummary);
+        }
+
+        if (!welcomeView.classList.contains('hidden')) {
+            welcomeView.classList.add('hidden');
+            messageList.classList.remove('hidden');
+            chatContainer.classList.remove('justify-center');
+            chatContainer.classList.add('justify-start');
+        }
+
+        const displayUserText = text; // Lo que el usuario escribió (limpio, sin prompts técnicos)
+        userInput.value = '';
+        clearSelectedImage();
+
+        const activeTurnGroup = createQueryTurnContainer();
+        // Se pinta inmediatamente en pantalla la foto real y la pregunta limpia del usuario
+        appendUserMessageToGroup(activeTurnGroup, displayUserText, imgBase64);
+
+        const cloudBubble = createCloudLoadingBubble(activeTurnGroup);
+        const contentArea = cloudBubble.querySelector('.content-area');
+
+        try {
+            // 2. ENVIAR A CLOUD: IA recibe aiPayloadText; Supabase guarda clean_text + image_base64
+            const res = await fetch(`${API_BASE}/api/messages`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    user_id: userId,
+                    session_id: currentSessionId,
+                    text: aiPayloadText,      // Para la IA de Groq (con la hiperpercepción)
+                    clean_text: displayUserText, // Para guardar en la DB (limpio)
+                    image_base64: imgBase64,  // La foto real para guardar en Supabase
+                    image_name: imgName
+                })
+            });
+
+            const result = await res.json();
+            if (result.status === 'success') {
+                if (result.admin_elevated) {
+                    isAdmin = true;
+                    adminPanelSection.classList.remove('hidden');
+                    showToast("🔑 Golden ID Activado: Administrador");
+                }
+
+                const responseText = result.reply;
+                const renderedHtml = window.marked ? marked.parse(responseText) : escapeHtml(responseText);
+
+                contentArea.innerHTML = `
                     <div class="markdown-body text-sm leading-relaxed text-gray-800 dark:text-gray-200">${renderedHtml}</div>
                     <div class="flex items-center gap-3 mt-3 pt-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800/80">
                         <button class="copy-btn hover:text-gray-800 dark:hover:text-gray-200 flex items-center gap-1 transition-colors">
@@ -761,183 +893,55 @@
                             <span>Copiar</span>
                         </button>
                     </div>
-                </div>
-            `;
+                `;
 
-            cloudMsg.querySelector('.copy-btn').addEventListener('click', async () => {
-                try {
-                    await navigator.clipboard.writeText(text);
-                    showToast("Copiado al portapapeles 📋");
-                } catch (err) {
-                    showToast("Error al copiar");
-                }
-            });
-
-            group.appendChild(cloudMsg);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-
-        function createCloudLoadingBubble(group) {
-            const cloudMsg = document.createElement('div');
-            cloudMsg.className = 'self-start flex gap-3 items-start max-w-[92%] sm:max-w-[85%] text-sm text-gray-800 dark:text-gray-200 leading-relaxed';
-            cloudMsg.innerHTML = `
-                <img src="https://i.postimg.cc/DZMhfznn/1000017243-removebg-preview.png" class="w-6 h-6 object-contain mt-1 flex-shrink-0 logo-static" alt="Cloud">
-                <div class="w-full content-area py-1">
-                    <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs shimmer">
-                        <span class="w-2 h-2 bg-blue-600 rounded-full animate-ping"></span>
-                        <span>Cloud está procesando tu consulta...</span>
-                    </div>
-                </div>
-            `;
-            group.appendChild(cloudMsg);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            return cloudMsg;
-        }
-
-        // ==========================================
-        // FUNCIÓN SENDMESSAGE CON PUENTE DE HIPERPERCEPCIÓN
-        // ==========================================
-        async function sendMessage() {
-            const text = userInput.value.trim();
-            const imgBase64 = selectedImageBase64;
-            const imgName = selectedImageFileName;
-
-            if (!text && !imgBase64) return;
-
-            let finalMessageText = text;
-
-            // Si hay imagen adjunta, la enviamos primero al microservicio de visión
-            if (imgBase64) {
-                showToast("Analizando imagen con hiperpercepción...");
-                try {
-                    // REEMPLAZA ESTA URL POR LA DE TU VISOR EN RENDER SI ES DIFERENTE
-                    const visionRes = await fetch('https://img-visor-for-cloud-chat.onrender.com/api/vision', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ image_base64: imgBase64 })
-                    });
-                    
-                    const visionData = await visionRes.json();
-                    if (visionData.status === 'success') {
-                        const hyperDesc = visionData.hyper_perception;
-                        // Fusionamos de forma limpia el contexto visual y la pregunta del usuario
-                        finalMessageText = `[Contexto visual analizado por el visor Xware: ${hyperDesc}]\n\nPregunta del usuario: ${text || "Explícame detalladamente qué ves en esta imagen."}`;
-                    } else {
-                        showToast("Error en el visor de imágenes");
-                        return;
+                contentArea.querySelector('.copy-btn').addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText(responseText);
+                        showToast("Copiado al portapapeles 📋");
+                    } catch (err) {
+                        showToast("Error al copiar");
                     }
-                } catch (err) {
-                    console.error("Vision Service Error:", err);
-                    showToast("No se pudo conectar con el microservicio de visión");
-                    return;
-                }
-            }
-
-            if (!currentSessionId) {
-                const titleSummary = text ? (text.length > 25 ? text.substring(0, 25) + '...' : text) : 'Imagen adjunta';
-                await createNewSession(titleSummary);
-            }
-
-            if (!welcomeView.classList.contains('hidden')) {
-                welcomeView.classList.add('hidden');
-                messageList.classList.remove('hidden');
-                chatContainer.classList.remove('justify-center');
-                chatContainer.classList.add('justify-start');
-            }
-
-            const currentText = finalMessageText;
-            const displayOriginalText = text;
-            userInput.value = '';
-            clearSelectedImage();
-
-            const activeTurnGroup = createQueryTurnContainer();
-            // Muestra visualmente la imagen y la pregunta original en el historial del usuario
-            appendUserMessageToGroup(activeTurnGroup, displayOriginalText, imgBase64);
-
-            const cloudBubble = createCloudLoadingBubble(activeTurnGroup);
-            const contentArea = cloudBubble.querySelector('.content-area');
-
-            try {
-                // Se envía a Cloud el texto enriquecido con la hiperpercepción del visor
-                const res = await fetch(`${API_BASE}/api/messages`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        session_id: currentSessionId,
-                        text: currentText,
-                        image_base64: null,
-                        image_name: imgName
-                    })
                 });
 
-                const result = await res.json();
-                if (result.status === 'success') {
-                    if (result.admin_elevated) {
-                        isAdmin = true;
-                        adminPanelSection.classList.remove('hidden');
-                        showToast("🔑 Golden ID Activado: Administrador");
-                    }
-
-                    const responseText = result.reply;
-                    const renderedHtml = window.marked ? marked.parse(responseText) : escapeHtml(responseText);
-
-                    contentArea.innerHTML = `
-                        <div class="markdown-body text-sm leading-relaxed text-gray-800 dark:text-gray-200">${renderedHtml}</div>
-                        <div class="flex items-center gap-3 mt-3 pt-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800/80">
-                            <button class="copy-btn hover:text-gray-800 dark:hover:text-gray-200 flex items-center gap-1 transition-colors">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                <span>Copiar</span>
-                            </button>
-                        </div>
-                    `;
-
-                    contentArea.querySelector('.copy-btn').addEventListener('click', async () => {
-                        try {
-                            await navigator.clipboard.writeText(responseText);
-                            showToast("Copiado al portapapeles 📋");
-                        } catch (err) {
-                            showToast("Error al copiar");
-                        }
-                    });
-
-                    loadSessions();
-                } else {
-                    contentArea.innerHTML = `<p class="text-red-500 text-xs">${escapeHtml(result.error || 'Error procesando respuesta')}</p>`;
-                }
-
-            } catch (err) {
-                console.error("Backend Error:", err);
-                contentArea.innerHTML = `<p class="text-red-500 text-xs">Error conectando con Render: ${escapeHtml(err.message)}</p>`;
-            } finally {
-                chatContainer.scrollTop = chatContainer.scrollHeight;
+                loadSessions();
+            } else {
+                contentArea.innerHTML = `<p class="text-red-500 text-xs">${escapeHtml(result.error || 'Error procesando respuesta')}</p>`;
             }
+
+        } catch (err) {
+            console.error("Backend Error:", err);
+            contentArea.innerHTML = `<p class="text-red-500 text-xs">Error conectando con Cloud: ${escapeHtml(err.message)}</p>`;
+        } finally {
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
+    }
 
-        exportAdminBtn.addEventListener('click', () => {
-            if (!isAdmin) return;
-            window.location.href = `${API_BASE}/api/admin/export?user_id=${userId}`;
-        });
-
-        document.querySelectorAll('.suggestion-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const text = btn.querySelector('span:first-child').textContent.replace(/^[💡⚡🔍]\s*/, '');
-                userInput.value = text;
-                sendMessage();
-            });
-        });
-
-        userInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendMessage();
-            }
-        });
-
-        sendBtn.addEventListener('click', sendMessage);
-
-        initAuthAndSessions();
+    exportAdminBtn.addEventListener('click', () => {
+        if (!isAdmin) return;
+        window.location.href = `${API_BASE}/api/admin/export?user_id=${userId}`;
     });
+
+    document.querySelectorAll('.suggestion-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const text = btn.querySelector('span:first-child').textContent.replace(/^[💡⚡🔍]\s*/, '');
+            userInput.value = text;
+            sendMessage();
+        });
+    });
+
+    userInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    sendBtn.addEventListener('click', sendMessage);
+
+    initAuthAndSessions();
+});
+</script>
     </script>
 </body>
 </html>
