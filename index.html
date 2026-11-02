@@ -384,21 +384,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // POPUP GLASSMORPHISM
         function checkAndShowFeatureModal() {
             const hasSeenModal = localStorage.getItem('cloud_feature_modal_seen');
-            if (!hasSeenModal) {
+            if (!hasSeenModal && glassFeatureModal) {
                 setTimeout(() => {
-                    if (glassFeatureModal) {
-                        glassFeatureModal.classList.remove('opacity-0', 'pointer-events-none');
-                        const card = glassFeatureModal.querySelector('.glass-modal-card');
-                        if (card) {
-                            card.classList.remove('scale-95');
-                            card.classList.add('scale-100');
-                        }
+                    glassFeatureModal.classList.remove('opacity-0', 'pointer-events-none');
+                    const card = glassFeatureModal.querySelector('.glass-modal-card');
+                    if (card) {
+                        card.classList.remove('scale-95');
+                        card.classList.add('scale-100');
                     }
                 }, 600);
             }
         }
 
-        if (closeGlassModalBtn) {
+        if (closeGlassModalBtn && glassFeatureModal) {
             closeGlassModalBtn.addEventListener('click', () => {
                 const card = glassFeatureModal.querySelector('.glass-modal-card');
                 if (card) {
@@ -441,6 +439,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // ADJUNTAR IMÁGENES
+        function processSelectedFile(file) {
+            if (!file.type.startsWith('image/')) {
+                showToast("Por favor selecciona un archivo de imagen válido");
+                if (imageInput) imageInput.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                selectedImageBase64 = event.target.result;
+                selectedImageFileName = file.name;
+
+                if (imagePreview) imagePreview.src = selectedImageBase64;
+                if (imageName) imageName.textContent = file.name;
+                if (imagePreviewContainer) imagePreviewContainer.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+
         if (headerGalleryBtn) {
             headerGalleryBtn.addEventListener('click', async () => {
                 if (window.showOpenFilePicker) {
@@ -456,17 +473,17 @@ document.addEventListener('DOMContentLoaded', () => {
                         processSelectedFile(file);
                         return;
                     } catch (err) {
-                        imageInput.click();
+                        if (imageInput) imageInput.click();
                         return;
                     }
                 }
-                imageInput.click();
+                if (imageInput) imageInput.click();
             });
         }
 
         if (attachBtn) {
             attachBtn.addEventListener('click', () => {
-                imageInput.click();
+                if (imageInput) imageInput.click();
             });
         }
 
@@ -475,25 +492,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 const file = e.target.files[0];
                 if (file) processSelectedFile(file);
             });
-        }
-
-        function processSelectedFile(file) {
-            if (!file.type.startsWith('image/')) {
-                showToast("Por favor selecciona un archivo de imagen válido");
-                imageInput.value = '';
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                selectedImageBase64 = event.target.result;
-                selectedImageFileName = file.name;
-
-                imagePreview.src = selectedImageBase64;
-                imageName.textContent = file.name;
-                imagePreviewContainer.classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
         }
 
         function clearSelectedImage() {
@@ -505,8 +503,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (imagePreviewContainer) imagePreviewContainer.classList.add('hidden');
         }
 
-        if (removeImageBtn) removeImageBtn.addEventListener('click', clearSelectedImage);
+        if (removeImageBtn) {
+            removeImageBtn.addEventListener('click', clearSelectedImage);
+        }
 
+        // EFECTO DE ESCRITURA (TYPING EFFECT)
         function typeWriter() {
             if (typedTitleEl && charIndex < fullText.length) {
                 typedTitleEl.textContent += fullText.charAt(charIndex);
@@ -673,13 +674,15 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const res = await fetch(`${API_BASE}/api/messages?session_id=${sessionId}`);
                 const data = await res.json();
-                messageList.innerHTML = '';
+                if (messageList) messageList.innerHTML = '';
 
                 if (data.messages && data.messages.length > 0) {
-                    welcomeView.classList.add('hidden');
-                    messageList.classList.remove('hidden');
-                    chatContainer.classList.remove('justify-center');
-                    chatContainer.classList.add('justify-start');
+                    if (welcomeView) welcomeView.classList.add('hidden');
+                    if (messageList) messageList.classList.remove('hidden');
+                    if (chatContainer) {
+                        chatContainer.classList.remove('justify-center');
+                        chatContainer.classList.add('justify-start');
+                    }
 
                     const sortedMessages = data.messages.sort((a, b) => {
                         const timeA = new Date(a.created_at || a.timestamp || 0).getTime();
@@ -701,10 +704,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                 } else {
-                    messageList.classList.add('hidden');
-                    welcomeView.classList.remove('hidden');
-                    chatContainer.classList.add('justify-center');
-                    chatContainer.classList.remove('justify-start');
+                    if (messageList) messageList.classList.add('hidden');
+                    if (welcomeView) welcomeView.classList.remove('hidden');
+                    if (chatContainer) {
+                        chatContainer.classList.add('justify-center');
+                        chatContainer.classList.remove('justify-start');
+                    }
                 }
             } catch (e) {
                 console.error("Error loading messages:", e);
@@ -714,11 +719,15 @@ document.addEventListener('DOMContentLoaded', () => {
         function resetToNewChat() {
             currentSessionId = null;
             localStorage.removeItem('cloud_current_session_id');
-            messageList.innerHTML = '';
-            messageList.classList.add('hidden');
-            welcomeView.classList.remove('hidden');
-            chatContainer.classList.add('justify-center');
-            chatContainer.classList.remove('justify-start');
+            if (messageList) {
+                messageList.innerHTML = '';
+                messageList.classList.add('hidden');
+            }
+            if (welcomeView) welcomeView.classList.remove('hidden');
+            if (chatContainer) {
+                chatContainer.classList.add('justify-center');
+                chatContainer.classList.remove('justify-start');
+            }
             clearSelectedImage();
             loadSessions();
             showToast("Nueva conversación iniciada ✨");
@@ -740,7 +749,7 @@ document.addEventListener('DOMContentLoaded', () => {
         function createQueryTurnContainer() {
             const turnGroup = document.createElement('div');
             turnGroup.className = 'w-full flex flex-col gap-4 border-b border-gray-200/50 dark:border-gray-800/60 pb-4';
-            messageList.appendChild(turnGroup);
+            if (messageList) messageList.appendChild(turnGroup);
             return turnGroup;
         }
 
@@ -757,8 +766,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${imgHtml}
                 ${text ? `<div class="bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-tr-sm text-sm leading-relaxed shadow-sm">${escapeHtml(text)}</div>` : ''}
             `;
-            group.appendChild(userMsg);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            if (group) group.appendChild(userMsg);
+            if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
         function appendCloudMessageToGroup(group, text) {
@@ -779,17 +788,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
 
-            cloudMsg.querySelector('.copy-btn').addEventListener('click', async () => {
-                try {
-                    await navigator.clipboard.writeText(text);
-                    showToast("Copiado al portapapeles 📋");
-                } catch (err) {
-                    showToast("Error al copiar");
-                }
-            });
+            const copyBtn = cloudMsg.querySelector('.copy-btn');
+            if (copyBtn) {
+                copyBtn.addEventListener('click', async () => {
+                    try {
+                        await navigator.clipboard.writeText(text);
+                        showToast("Copiado al portapapeles 📋");
+                    } catch (err) {
+                        showToast("Error al copiar");
+                    }
+                });
+            }
 
-            group.appendChild(cloudMsg);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            if (group) group.appendChild(cloudMsg);
+            if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
         function createCloudLoadingBubble(group) {
@@ -804,8 +816,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
             `;
-            group.appendChild(cloudMsg);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            if (group) group.appendChild(cloudMsg);
+            if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
             return cloudMsg;
         }
 
@@ -813,7 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // FLUJO DE ENVÍO CON PUENTE DE HIPERPERCEPCIÓN
         // ==========================================
         async function sendMessage() {
-            const text = userInput.value.trim();
+            const text = userInput ? userInput.value.trim() : '';
             const imgBase64 = selectedImageBase64;
             const imgName = selectedImageFileName;
 
@@ -821,7 +833,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let aiPayloadText = text || "Explícame detalladamente qué ves en esta imagen.";
 
-            // 1. SI HAY IMAGEN: Enviar primero al visor en Render (De forma transparente)
             if (imgBase64) {
                 showToast("Cloud está observando los detalles de tu foto...");
                 try {
@@ -834,7 +845,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     const visionData = await visionRes.json();
                     if (visionData.status === 'success') {
                         const hyperDesc = visionData.hyper_perception;
-                        // Texto que recibe ÚNICAMENTE la IA de Cloud
                         aiPayloadText = `[Contexto visual analizado por el visor Xware: ${hyperDesc}]\n\nPregunta del usuario: ${text || "Explícame detalladamente qué ves en esta imagen."}`;
                     } else {
                         showToast("Vaya, me ha costado un segundo conectar con la imagen, probemos otra vez.");
@@ -852,35 +862,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 await createNewSession(titleSummary);
             }
 
-            if (!welcomeView.classList.contains('hidden')) {
+            if (welcomeView && !welcomeView.classList.contains('hidden')) {
                 welcomeView.classList.add('hidden');
-                messageList.classList.remove('hidden');
-                chatContainer.classList.remove('justify-center');
-                chatContainer.classList.add('justify-start');
+                if (messageList) messageList.classList.remove('hidden');
+                if (chatContainer) {
+                    chatContainer.classList.remove('justify-center');
+                    chatContainer.classList.add('justify-start');
+                }
             }
 
-            const cleanUserText = text; // Lo que el usuario escribió (sin textos técnicos)
-            userInput.value = '';
+            const cleanUserText = text;
+            if (userInput) userInput.value = '';
             clearSelectedImage();
 
             const activeTurnGroup = createQueryTurnContainer();
-            // Pinta la imagen real y la pregunta limpia del usuario en el chat
             appendUserMessageToGroup(activeTurnGroup, cleanUserText, imgBase64);
 
             const cloudBubble = createCloudLoadingBubble(activeTurnGroup);
-            const contentArea = cloudBubble.querySelector('.content-area');
+            const contentArea = cloudBubble ? cloudBubble.querySelector('.content-area') : null;
 
             try {
-                // 2. ENVIAR A CLOUD: Mandamos la hiperpercepción a la IA y la imagen real a la BD
                 const res = await fetch(`${API_BASE}/api/messages`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         user_id: userId,
                         session_id: currentSessionId,
-                        text: aiPayloadText,      // Para que Groq/Cloud razone con la hiperpercepción
-                        clean_text: cleanUserText, // Para que Supabase guarde sólo la pregunta limpia
-                        image_base64: imgBase64,  // Para que Supabase guarde la imagen real
+                        text: aiPayloadText,
+                        clean_text: cleanUserText,
+                        image_base64: imgBase64,
                         image_name: imgName
                     })
                 });
@@ -896,35 +906,44 @@ document.addEventListener('DOMContentLoaded', () => {
                     const responseText = result.reply;
                     const renderedHtml = window.marked ? marked.parse(responseText) : escapeHtml(responseText);
 
-                    contentArea.innerHTML = `
-                        <div class="markdown-body text-sm leading-relaxed text-gray-800 dark:text-gray-200">${renderedHtml}</div>
-                        <div class="flex items-center gap-3 mt-3 pt-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800/80">
-                            <button class="copy-btn hover:text-gray-800 dark:hover:text-gray-200 flex items-center gap-1 transition-colors">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                <span>Copiar</span>
-                            </button>
-                        </div>
-                    `;
+                    if (contentArea) {
+                        contentArea.innerHTML = `
+                            <div class="markdown-body text-sm leading-relaxed text-gray-800 dark:text-gray-200">${renderedHtml}</div>
+                            <div class="flex items-center gap-3 mt-3 pt-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800/80">
+                                <button class="copy-btn hover:text-gray-800 dark:hover:text-gray-200 flex items-center gap-1 transition-colors">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                    <span>Copiar</span>
+                                </button>
+                            </div>
+                        `;
 
-                    contentArea.querySelector('.copy-btn').addEventListener('click', async () => {
-                        try {
-                            await navigator.clipboard.writeText(responseText);
-                            showToast("Copiado al portapapeles 📋");
-                        } catch (err) {
-                            showToast("Error al copiar");
+                        const copyBtn = contentArea.querySelector('.copy-btn');
+                        if (copyBtn) {
+                            copyBtn.addEventListener('click', async () => {
+                                try {
+                                    await navigator.clipboard.writeText(responseText);
+                                    showToast("Copiado al portapapeles 📋");
+                                } catch (err) {
+                                    showToast("Error al copiar");
+                                }
+                            });
                         }
-                    });
+                    }
 
                     loadSessions();
                 } else {
-                    contentArea.innerHTML = `<p class="text-red-500 text-xs">${escapeHtml(result.error || 'Error procesando respuesta')}</p>`;
+                    if (contentArea) {
+                        contentArea.innerHTML = `<p class="text-red-500 text-xs">${escapeHtml(result.error || 'Error procesando respuesta')}</p>`;
+                    }
                 }
 
             } catch (err) {
                 console.error("Backend Error:", err);
-                contentArea.innerHTML = `<p class="text-red-500 text-xs">Error conectando con Cloud: ${escapeHtml(err.message)}</p>`;
+                if (contentArea) {
+                    contentArea.innerHTML = `<p class="text-red-500 text-xs">Error conectando con Cloud: ${escapeHtml(err.message)}</p>`;
+                }
             } finally {
-                chatContainer.scrollTop = chatContainer.scrollHeight;
+                if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
             }
         }
 
@@ -937,9 +956,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.querySelectorAll('.suggestion-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                const text = btn.querySelector('span:first-child').textContent.replace(/^[💡⚡🔍]\s*/, '');
-                userInput.value = text;
-                sendMessage();
+                const span = btn.querySelector('span:first-child');
+                if (span && userInput) {
+                    const text = span.textContent.replace(/^[💡⚡🔍]\s*/, '');
+                    userInput.value = text;
+                    sendMessage();
+                }
             });
         });
 
