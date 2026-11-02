@@ -329,7 +329,7 @@
     </div>
 
     <script>
-    document.addEventListener('DOMContentLoaded', () => {
+   document.addEventListener('DOMContentLoaded', () => {
         const API_BASE = 'https://cloud-es7z.onrender.com';
 
         const fullText = "Hola, soy Cloud, ¿en qué te puedo ayudar?";
@@ -433,36 +433,33 @@
         });
 
         headerGalleryBtn.addEventListener('click', async () => {
-    // Intentar solicitar acceso mediante la API moderna de archivos (si el navegador la soporta)
-    if (window.showOpenFilePicker) {
-        try {
-            const [fileHandle] = await window.showOpenFilePicker({
-                types: [{
-                    description: 'Imágenes',
-                    accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.gif'] }
-                }],
-                multiple: false
-            });
-            const file = await fileHandle.getFile();
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                selectedImageBase64 = event.target.result;
-                selectedImageFileName = file.name;
-                imagePreview.src = selectedImageBase64;
-                imageName.textContent = file.name;
-                imagePreviewContainer.classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-            return;
-        } catch (err) {
-            // Si el usuario rechaza el permiso o cancela el cuadro de diálogo, aplicamos el respaldo normal
+            if (window.showOpenFilePicker) {
+                try {
+                    const [fileHandle] = await window.showOpenFilePicker({
+                        types: [{
+                            description: 'Imágenes',
+                            accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.gif'] }
+                        }],
+                        multiple: false
+                    });
+                    const file = await fileHandle.getFile();
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        selectedImageBase64 = event.target.result;
+                        selectedImageFileName = file.name;
+                        imagePreview.src = selectedImageBase64;
+                        imageName.textContent = file.name;
+                        imagePreviewContainer.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                    return;
+                } catch (err) {
+                    imageInput.click();
+                    return;
+                }
+            }
             imageInput.click();
-            return;
-        }
-    }
-    // Respaldo automático para móviles y navegadores que usan el input file clásico
-    imageInput.click();
-});
+        });
 
         attachBtn.addEventListener('click', () => {
             imageInput.click();
@@ -797,12 +794,44 @@
             return cloudMsg;
         }
 
+        // ==========================================
+        // FUNCIÓN SENDMESSAGE CON PUENTE DE HIPERPERCEPCIÓN
+        // ==========================================
         async function sendMessage() {
             const text = userInput.value.trim();
             const imgBase64 = selectedImageBase64;
             const imgName = selectedImageFileName;
 
             if (!text && !imgBase64) return;
+
+            let finalMessageText = text;
+
+            // Si hay imagen adjunta, la enviamos primero al microservicio de visión
+            if (imgBase64) {
+                showToast("Analizando imagen con hiperpercepción...");
+                try {
+                    // REEMPLAZA ESTA URL POR LA DE TU VISOR EN RENDER SI ES DIFERENTE
+                    const visionRes = await fetch('https://img-visor-for-cloud-chat.onrender.com/api/vision', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ image_base64: imgBase64 })
+                    });
+                    
+                    const visionData = await visionRes.json();
+                    if (visionData.status === 'success') {
+                        const hyperDesc = visionData.hyper_perception;
+                        // Fusionamos de forma limpia el contexto visual y la pregunta del usuario
+                        finalMessageText = `[Contexto visual analizado por el visor Xware: ${hyperDesc}]\n\nPregunta del usuario: ${text || "Explícame detalladamente qué ves en esta imagen."}`;
+                    } else {
+                        showToast("Error en el visor de imágenes");
+                        return;
+                    }
+                } catch (err) {
+                    console.error("Vision Service Error:", err);
+                    showToast("No se pudo conectar con el microservicio de visión");
+                    return;
+                }
+            }
 
             if (!currentSessionId) {
                 const titleSummary = text ? (text.length > 25 ? text.substring(0, 25) + '...' : text) : 'Imagen adjunta';
@@ -816,17 +845,20 @@
                 chatContainer.classList.add('justify-start');
             }
 
-            const currentText = text;
+            const currentText = finalMessageText;
+            const displayOriginalText = text;
             userInput.value = '';
             clearSelectedImage();
 
             const activeTurnGroup = createQueryTurnContainer();
-            appendUserMessageToGroup(activeTurnGroup, currentText, imgBase64);
+            // Muestra visualmente la imagen y la pregunta original en el historial del usuario
+            appendUserMessageToGroup(activeTurnGroup, displayOriginalText, imgBase64);
 
             const cloudBubble = createCloudLoadingBubble(activeTurnGroup);
             const contentArea = cloudBubble.querySelector('.content-area');
 
             try {
+                // Se envía a Cloud el texto enriquecido con la hiperpercepción del visor
                 const res = await fetch(`${API_BASE}/api/messages`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -834,7 +866,7 @@
                         user_id: userId,
                         session_id: currentSessionId,
                         text: currentText,
-                        image_base64: imgBase64,
+                        image_base64: null,
                         image_name: imgName
                     })
                 });
