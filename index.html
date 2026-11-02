@@ -329,10 +329,8 @@
     </div>
 
     <script>
-  <script>
-document.addEventListener('DOMContentLoaded', () => {
+   document.addEventListener('DOMContentLoaded', () => {
         const API_BASE = 'https://cloud-es7z.onrender.com';
-        const VISION_SERVICE_URL = 'https://img-visor-for-cloud-chat.onrender.com/api/vision';
 
         const fullText = "Hola, soy Cloud, ¿en qué te puedo ayudar?";
         const typedTitleEl = document.getElementById('typedTitle');
@@ -381,10 +379,10 @@ document.addEventListener('DOMContentLoaded', () => {
         let currentSessionId = localStorage.getItem('cloud_current_session_id') || null;
         let isAdmin = false;
 
-        // POPUP GLASSMORPHISM
+        // POPUP GLASSMORPHISM DE 1 SOLA VEZ POR USUARIO
         function checkAndShowFeatureModal() {
             const hasSeenModal = localStorage.getItem('cloud_feature_modal_seen');
-            if (!hasSeenModal && glassFeatureModal) {
+            if (!hasSeenModal) {
                 setTimeout(() => {
                     glassFeatureModal.classList.remove('opacity-0', 'pointer-events-none');
                     const card = glassFeatureModal.querySelector('.glass-modal-card');
@@ -396,17 +394,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        if (closeGlassModalBtn && glassFeatureModal) {
-            closeGlassModalBtn.addEventListener('click', () => {
-                const card = glassFeatureModal.querySelector('.glass-modal-card');
-                if (card) {
-                    card.classList.remove('scale-100');
-                    card.classList.add('scale-95');
-                }
-                glassFeatureModal.classList.add('opacity-0', 'pointer-events-none');
-                localStorage.setItem('cloud_feature_modal_seen', 'true');
-            });
-        }
+        closeGlassModalBtn.addEventListener('click', () => {
+            const card = glassFeatureModal.querySelector('.glass-modal-card');
+            if (card) {
+                card.classList.remove('scale-100');
+                card.classList.add('scale-95');
+            }
+            glassFeatureModal.classList.add('opacity-0', 'pointer-events-none');
+            localStorage.setItem('cloud_feature_modal_seen', 'true');
+        });
 
         // GESTIÓN DE TEMA CLARO / OSCURO
         let currentTheme = localStorage.getItem('cloud_theme') || 'light';
@@ -416,14 +412,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.documentElement.classList.add('dark');
                 document.body.classList.remove('light-mode');
                 document.body.classList.add('dark-mode');
-                if (sunIcon) sunIcon.classList.remove('hidden');
-                if (moonIcon) moonIcon.classList.add('hidden');
+                sunIcon.classList.remove('hidden');
+                moonIcon.classList.add('hidden');
             } else {
                 document.documentElement.classList.remove('dark');
                 document.body.classList.remove('dark-mode');
                 document.body.classList.add('light-mode');
-                if (sunIcon) sunIcon.classList.add('hidden');
-                if (moonIcon) moonIcon.classList.remove('hidden');
+                sunIcon.classList.add('hidden');
+                moonIcon.classList.remove('hidden');
             }
             localStorage.setItem('cloud_theme', theme);
             currentTheme = theme;
@@ -431,18 +427,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
         applyTheme(currentTheme);
 
-        if (themeToggleBtn) {
-            themeToggleBtn.addEventListener('click', () => {
-                const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
-                applyTheme(nextTheme);
-            });
-        }
+        themeToggleBtn.addEventListener('click', () => {
+            const nextTheme = currentTheme === 'light' ? 'dark' : 'light';
+            applyTheme(nextTheme);
+        });
 
-        // ADJUNTAR IMÁGENES
-        function processSelectedFile(file) {
+        headerGalleryBtn.addEventListener('click', async () => {
+            if (window.showOpenFilePicker) {
+                try {
+                    const [fileHandle] = await window.showOpenFilePicker({
+                        types: [{
+                            description: 'Imágenes',
+                            accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.gif'] }
+                        }],
+                        multiple: false
+                    });
+                    const file = await fileHandle.getFile();
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        selectedImageBase64 = event.target.result;
+                        selectedImageFileName = file.name;
+                        imagePreview.src = selectedImageBase64;
+                        imageName.textContent = file.name;
+                        imagePreviewContainer.classList.remove('hidden');
+                    };
+                    reader.readAsDataURL(file);
+                    return;
+                } catch (err) {
+                    imageInput.click();
+                    return;
+                }
+            }
+            imageInput.click();
+        });
+
+        attachBtn.addEventListener('click', () => {
+            imageInput.click();
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
             if (!file.type.startsWith('image/')) {
                 showToast("Por favor selecciona un archivo de imagen válido");
-                if (imageInput) imageInput.value = '';
+                imageInput.value = '';
                 return;
             }
 
@@ -451,65 +480,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 selectedImageBase64 = event.target.result;
                 selectedImageFileName = file.name;
 
-                if (imagePreview) imagePreview.src = selectedImageBase64;
-                if (imageName) imageName.textContent = file.name;
-                if (imagePreviewContainer) imagePreviewContainer.classList.remove('hidden');
+                imagePreview.src = selectedImageBase64;
+                imageName.textContent = file.name;
+                imagePreviewContainer.classList.remove('hidden');
             };
             reader.readAsDataURL(file);
-        }
-
-        if (headerGalleryBtn) {
-            headerGalleryBtn.addEventListener('click', async () => {
-                if (window.showOpenFilePicker) {
-                    try {
-                        const [fileHandle] = await window.showOpenFilePicker({
-                            types: [{
-                                description: 'Imágenes',
-                                accept: { 'image/*': ['.png', '.jpg', '.jpeg', '.webp', '.gif'] }
-                            }],
-                            multiple: false
-                        });
-                        const file = await fileHandle.getFile();
-                        processSelectedFile(file);
-                        return;
-                    } catch (err) {
-                        if (imageInput) imageInput.click();
-                        return;
-                    }
-                }
-                if (imageInput) imageInput.click();
-            });
-        }
-
-        if (attachBtn) {
-            attachBtn.addEventListener('click', () => {
-                if (imageInput) imageInput.click();
-            });
-        }
-
-        if (imageInput) {
-            imageInput.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) processSelectedFile(file);
-            });
-        }
+        });
 
         function clearSelectedImage() {
             selectedImageBase64 = null;
             selectedImageFileName = null;
-            if (imageInput) imageInput.value = '';
-            if (imagePreview) imagePreview.src = '';
-            if (imageName) imageName.textContent = '';
-            if (imagePreviewContainer) imagePreviewContainer.classList.add('hidden');
+            imageInput.value = '';
+            imagePreview.src = '';
+            imageName.textContent = '';
+            imagePreviewContainer.classList.add('hidden');
         }
 
-        if (removeImageBtn) {
-            removeImageBtn.addEventListener('click', clearSelectedImage);
-        }
+        removeImageBtn.addEventListener('click', clearSelectedImage);
 
-        // EFECTO DE ESCRITURA (TYPING EFFECT)
         function typeWriter() {
-            if (typedTitleEl && charIndex < fullText.length) {
+            if (charIndex < fullText.length) {
                 typedTitleEl.textContent += fullText.charAt(charIndex);
                 charIndex++;
                 setTimeout(typeWriter, typingSpeed);
@@ -520,30 +510,26 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(typeWriter, 300);
 
         function showToast(msg) {
-            if (toastMsg && toast) {
-                toastMsg.textContent = msg;
-                toast.classList.remove('opacity-0', 'pointer-events-none');
-                setTimeout(() => {
-                    toast.classList.add('opacity-0', 'pointer-events-none');
-                }, 3000);
-            }
+            toastMsg.textContent = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 3000);
         }
 
         function toggleSidebar(open) {
-            if (sidebar && sidebarOverlay) {
-                if (open) {
-                    sidebar.classList.remove('-translate-x-full');
-                    sidebarOverlay.classList.remove('opacity-0', 'pointer-events-none');
-                } else {
-                    sidebar.classList.add('-translate-x-full');
-                    sidebarOverlay.classList.add('opacity-0', 'pointer-events-none');
-                }
+            if (open) {
+                sidebar.classList.remove('-translate-x-full');
+                sidebarOverlay.classList.remove('opacity-0', 'pointer-events-none');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                sidebarOverlay.classList.add('opacity-0', 'pointer-events-none');
             }
         }
 
-        if (menuBtn) menuBtn.addEventListener('click', () => toggleSidebar(true));
-        if (closeSidebarBtn) closeSidebarBtn.addEventListener('click', () => toggleSidebar(false));
-        if (sidebarOverlay) sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
+        menuBtn.addEventListener('click', () => toggleSidebar(true));
+        closeSidebarBtn.addEventListener('click', () => toggleSidebar(false));
+        sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
 
         async function initAuthAndSessions() {
             try {
@@ -561,9 +547,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('cloud_user_id', userId);
                     localStorage.setItem('cloud_user_name', userName);
                     
-                    if (headerUserName) headerUserName.textContent = `Cloud AI (${userName})`;
+                    headerUserName.textContent = `Cloud AI (${userName})`;
 
-                    if (isAdmin && adminPanelSection) {
+                    if (isAdmin) {
                         adminPanelSection.classList.remove('hidden');
                     }
 
@@ -575,14 +561,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             } catch (e) {
                 console.error("Auth error:", e);
-                showToast("No se pudo conectar con el servidor principal");
+                showToast("No se pudo conectar con el servidor en Render");
             } finally {
                 checkAndShowFeatureModal();
             }
         }
 
         async function loadSessions() {
-            if (!userId || !sessionList) return;
+            if (!userId) return;
             try {
                 const res = await fetch(`${API_BASE}/api/sessions?user_id=${userId}`);
                 const data = await res.json();
@@ -674,15 +660,13 @@ document.addEventListener('DOMContentLoaded', () => {
             try {
                 const res = await fetch(`${API_BASE}/api/messages?session_id=${sessionId}`);
                 const data = await res.json();
-                if (messageList) messageList.innerHTML = '';
+                messageList.innerHTML = '';
 
                 if (data.messages && data.messages.length > 0) {
-                    if (welcomeView) welcomeView.classList.add('hidden');
-                    if (messageList) messageList.classList.remove('hidden');
-                    if (chatContainer) {
-                        chatContainer.classList.remove('justify-center');
-                        chatContainer.classList.add('justify-start');
-                    }
+                    welcomeView.classList.add('hidden');
+                    messageList.classList.remove('hidden');
+                    chatContainer.classList.remove('justify-center');
+                    chatContainer.classList.add('justify-start');
 
                     const sortedMessages = data.messages.sort((a, b) => {
                         const timeA = new Date(a.created_at || a.timestamp || 0).getTime();
@@ -704,12 +688,10 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                 } else {
-                    if (messageList) messageList.classList.add('hidden');
-                    if (welcomeView) welcomeView.classList.remove('hidden');
-                    if (chatContainer) {
-                        chatContainer.classList.add('justify-center');
-                        chatContainer.classList.remove('justify-start');
-                    }
+                    messageList.classList.add('hidden');
+                    welcomeView.classList.remove('hidden');
+                    chatContainer.classList.add('justify-center');
+                    chatContainer.classList.remove('justify-start');
                 }
             } catch (e) {
                 console.error("Error loading messages:", e);
@@ -719,27 +701,21 @@ document.addEventListener('DOMContentLoaded', () => {
         function resetToNewChat() {
             currentSessionId = null;
             localStorage.removeItem('cloud_current_session_id');
-            if (messageList) {
-                messageList.innerHTML = '';
-                messageList.classList.add('hidden');
-            }
-            if (welcomeView) welcomeView.classList.remove('hidden');
-            if (chatContainer) {
-                chatContainer.classList.add('justify-center');
-                chatContainer.classList.remove('justify-start');
-            }
+            messageList.innerHTML = '';
+            messageList.classList.add('hidden');
+            welcomeView.classList.remove('hidden');
+            chatContainer.classList.add('justify-center');
+            chatContainer.classList.remove('justify-start');
             clearSelectedImage();
             loadSessions();
             showToast("Nueva conversación iniciada ✨");
         }
 
-        if (newChatBtn) newChatBtn.addEventListener('click', resetToNewChat);
-        if (sidebarNewChatBtn) {
-            sidebarNewChatBtn.addEventListener('click', () => {
-                toggleSidebar(false);
-                resetToNewChat();
-            });
-        }
+        newChatBtn.addEventListener('click', resetToNewChat);
+        sidebarNewChatBtn.addEventListener('click', () => {
+            toggleSidebar(false);
+            resetToNewChat();
+        });
 
         function escapeHtml(str) {
             if (!str) return '';
@@ -749,7 +725,7 @@ document.addEventListener('DOMContentLoaded', () => {
         function createQueryTurnContainer() {
             const turnGroup = document.createElement('div');
             turnGroup.className = 'w-full flex flex-col gap-4 border-b border-gray-200/50 dark:border-gray-800/60 pb-4';
-            if (messageList) messageList.appendChild(turnGroup);
+            messageList.appendChild(turnGroup);
             return turnGroup;
         }
 
@@ -766,8 +742,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 ${imgHtml}
                 ${text ? `<div class="bg-blue-600 text-white px-5 py-3 rounded-2xl rounded-tr-sm text-sm leading-relaxed shadow-sm">${escapeHtml(text)}</div>` : ''}
             `;
-            if (group) group.appendChild(userMsg);
-            if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+            group.appendChild(userMsg);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
         function appendCloudMessageToGroup(group, text) {
@@ -788,20 +764,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             `;
 
-            const copyBtn = cloudMsg.querySelector('.copy-btn');
-            if (copyBtn) {
-                copyBtn.addEventListener('click', async () => {
-                    try {
-                        await navigator.clipboard.writeText(text);
-                        showToast("Copiado al portapapeles 📋");
-                    } catch (err) {
-                        showToast("Error al copiar");
-                    }
-                });
-            }
+            cloudMsg.querySelector('.copy-btn').addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(text);
+                    showToast("Copiado al portapapeles 📋");
+                } catch (err) {
+                    showToast("Error al copiar");
+                }
+            });
 
-            if (group) group.appendChild(cloudMsg);
-            if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+            group.appendChild(cloudMsg);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
         }
 
         function createCloudLoadingBubble(group) {
@@ -816,27 +789,29 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </div>
             `;
-            if (group) group.appendChild(cloudMsg);
-            if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+            group.appendChild(cloudMsg);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
             return cloudMsg;
         }
 
         // ==========================================
-        // FLUJO DE ENVÍO CON PUENTE DE HIPERPERCEPCIÓN
+        // FUNCIÓN SENDMESSAGE CON PUENTE DE HIPERPERCEPCIÓN
         // ==========================================
         async function sendMessage() {
-            const text = userInput ? userInput.value.trim() : '';
+            const text = userInput.value.trim();
             const imgBase64 = selectedImageBase64;
             const imgName = selectedImageFileName;
 
             if (!text && !imgBase64) return;
 
-            let aiPayloadText = text || "Explícame detalladamente qué ves en esta imagen.";
+            let finalMessageText = text;
 
+            // Si hay imagen adjunta, la enviamos primero al microservicio de visión
             if (imgBase64) {
-                showToast("Cloud está observando los detalles de tu foto...");
+                showToast("Analizando imagen con hiperpercepción...");
                 try {
-                    const visionRes = await fetch(VISION_SERVICE_URL, {
+                    // REEMPLAZA ESTA URL POR LA DE TU VISOR EN RENDER SI ES DIFERENTE
+                    const visionRes = await fetch('https://img-visor-for-cloud-chat.onrender.com/api/vision', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ image_base64: imgBase64 })
@@ -845,9 +820,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     const visionData = await visionRes.json();
                     if (visionData.status === 'success') {
                         const hyperDesc = visionData.hyper_perception;
-                        aiPayloadText = `[Contexto visual analizado por el visor Xware: ${hyperDesc}]\n\nPregunta del usuario: ${text || "Explícame detalladamente qué ves en esta imagen."}`;
+                        // Fusionamos de forma limpia el contexto visual y la pregunta del usuario
+                        finalMessageText = `[Contexto visual analizado por el visor Xware: ${hyperDesc}]\n\nPregunta del usuario: ${text || "Explícame detalladamente qué ves en esta imagen."}`;
                     } else {
-                        showToast("Vaya, me ha costado un segundo conectar con la imagen, probemos otra vez.");
+                        showToast("Error en el visor de imágenes");
                         return;
                     }
                 } catch (err) {
@@ -862,35 +838,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 await createNewSession(titleSummary);
             }
 
-            if (welcomeView && !welcomeView.classList.contains('hidden')) {
+            if (!welcomeView.classList.contains('hidden')) {
                 welcomeView.classList.add('hidden');
-                if (messageList) messageList.classList.remove('hidden');
-                if (chatContainer) {
-                    chatContainer.classList.remove('justify-center');
-                    chatContainer.classList.add('justify-start');
-                }
+                messageList.classList.remove('hidden');
+                chatContainer.classList.remove('justify-center');
+                chatContainer.classList.add('justify-start');
             }
 
-            const cleanUserText = text;
-            if (userInput) userInput.value = '';
+            const currentText = finalMessageText;
+            const displayOriginalText = text;
+            userInput.value = '';
             clearSelectedImage();
 
             const activeTurnGroup = createQueryTurnContainer();
-            appendUserMessageToGroup(activeTurnGroup, cleanUserText, imgBase64);
+            // Muestra visualmente la imagen y la pregunta original en el historial del usuario
+            appendUserMessageToGroup(activeTurnGroup, displayOriginalText, imgBase64);
 
             const cloudBubble = createCloudLoadingBubble(activeTurnGroup);
-            const contentArea = cloudBubble ? cloudBubble.querySelector('.content-area') : null;
+            const contentArea = cloudBubble.querySelector('.content-area');
 
             try {
+                // Se envía a Cloud el texto enriquecido con la hiperpercepción del visor
                 const res = await fetch(`${API_BASE}/api/messages`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         user_id: userId,
                         session_id: currentSessionId,
-                        text: aiPayloadText,
-                        clean_text: cleanUserText,
-                        image_base64: imgBase64,
+                        text: currentText,
+                        image_base64: null,
                         image_name: imgName
                     })
                 });
@@ -899,86 +875,69 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (result.status === 'success') {
                     if (result.admin_elevated) {
                         isAdmin = true;
-                        if (adminPanelSection) adminPanelSection.classList.remove('hidden');
+                        adminPanelSection.classList.remove('hidden');
                         showToast("🔑 Golden ID Activado: Administrador");
                     }
 
                     const responseText = result.reply;
                     const renderedHtml = window.marked ? marked.parse(responseText) : escapeHtml(responseText);
 
-                    if (contentArea) {
-                        contentArea.innerHTML = `
-                            <div class="markdown-body text-sm leading-relaxed text-gray-800 dark:text-gray-200">${renderedHtml}</div>
-                            <div class="flex items-center gap-3 mt-3 pt-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800/80">
-                                <button class="copy-btn hover:text-gray-800 dark:hover:text-gray-200 flex items-center gap-1 transition-colors">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                                    <span>Copiar</span>
-                                </button>
-                            </div>
-                        `;
+                    contentArea.innerHTML = `
+                        <div class="markdown-body text-sm leading-relaxed text-gray-800 dark:text-gray-200">${renderedHtml}</div>
+                        <div class="flex items-center gap-3 mt-3 pt-2 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-100 dark:border-gray-800/80">
+                            <button class="copy-btn hover:text-gray-800 dark:hover:text-gray-200 flex items-center gap-1 transition-colors">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                                <span>Copiar</span>
+                            </button>
+                        </div>
+                    `;
 
-                        const copyBtn = contentArea.querySelector('.copy-btn');
-                        if (copyBtn) {
-                            copyBtn.addEventListener('click', async () => {
-                                try {
-                                    await navigator.clipboard.writeText(responseText);
-                                    showToast("Copiado al portapapeles 📋");
-                                } catch (err) {
-                                    showToast("Error al copiar");
-                                }
-                            });
+                    contentArea.querySelector('.copy-btn').addEventListener('click', async () => {
+                        try {
+                            await navigator.clipboard.writeText(responseText);
+                            showToast("Copiado al portapapeles 📋");
+                        } catch (err) {
+                            showToast("Error al copiar");
                         }
-                    }
+                    });
 
                     loadSessions();
                 } else {
-                    if (contentArea) {
-                        contentArea.innerHTML = `<p class="text-red-500 text-xs">${escapeHtml(result.error || 'Error procesando respuesta')}</p>`;
-                    }
+                    contentArea.innerHTML = `<p class="text-red-500 text-xs">${escapeHtml(result.error || 'Error procesando respuesta')}</p>`;
                 }
 
             } catch (err) {
                 console.error("Backend Error:", err);
-                if (contentArea) {
-                    contentArea.innerHTML = `<p class="text-red-500 text-xs">Error conectando con Cloud: ${escapeHtml(err.message)}</p>`;
-                }
+                contentArea.innerHTML = `<p class="text-red-500 text-xs">Error conectando con Render: ${escapeHtml(err.message)}</p>`;
             } finally {
-                if (chatContainer) chatContainer.scrollTop = chatContainer.scrollHeight;
+                chatContainer.scrollTop = chatContainer.scrollHeight;
             }
         }
 
-        if (exportAdminBtn) {
-            exportAdminBtn.addEventListener('click', () => {
-                if (!isAdmin) return;
-                window.location.href = `${API_BASE}/api/admin/export?user_id=${userId}`;
-            });
-        }
+        exportAdminBtn.addEventListener('click', () => {
+            if (!isAdmin) return;
+            window.location.href = `${API_BASE}/api/admin/export?user_id=${userId}`;
+        });
 
         document.querySelectorAll('.suggestion-btn').forEach(btn => {
             btn.addEventListener('click', () => {
-                const span = btn.querySelector('span:first-child');
-                if (span && userInput) {
-                    const text = span.textContent.replace(/^[💡⚡🔍]\s*/, '');
-                    userInput.value = text;
-                    sendMessage();
-                }
+                const text = btn.querySelector('span:first-child').textContent.replace(/^[💡⚡🔍]\s*/, '');
+                userInput.value = text;
+                sendMessage();
             });
         });
 
-        if (userInput) {
-            userInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
-        }
+        userInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
 
-        if (sendBtn) sendBtn.addEventListener('click', sendMessage);
+        sendBtn.addEventListener('click', sendMessage);
 
         initAuthAndSessions();
     });
-</script>
     </script>
 </body>
 </html>
