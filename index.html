@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cloud -mi amigo</title>
+    <title>Cloud -Mejor Amigo</title>
     <link rel="icon" type="image/png" href="https://i.postimg.cc/FzT1DCTg/1000017243-removebg-preview.png">
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -794,7 +794,7 @@
                 <div class="w-full content-area py-1">
                     <div class="flex items-center gap-2 text-gray-500 dark:text-gray-400 text-xs shimmer">
                         <span class="w-2 h-2 bg-blue-600 rounded-full animate-ping"></span>
-                        <span>Cloud está procesando tu consulta...</span>
+                        <span>Imaginando...</span>
                     </div>
                 </div>
             `;
@@ -830,7 +830,7 @@
                     if (visionData.status === 'success') {
                         const hyperDesc = visionData.hyper_perception;
                         // Fusionamos de forma limpia el contexto visual y la pregunta del usuario
-                        finalMessageText = `[Contexto visual analizado por el visor Xware: ${hyperDesc}]\n\nPregunta del usuario: ${text || "Explícame detalladamente qué ves en esta imagen."}`;
+                        finalMessageText = `[Contexto visual analizado por el visor Cloud: ${hyperDesc}]\n\nPregunta del usuario: ${text || "Explícame detalladamente qué ves en esta imagen."}`;
                     } else {
                         showToast("Error en el visor de imágenes");
                         return;
